@@ -98,7 +98,7 @@ sd_ACMD41_finish:
 	jal	sd_sendCmd
 	move	$a1, $zero
 	
-	#Set SD clock rate to 10MHz
+	#Set SD clock rate to 25MHz
 	or	$t0, $zero, 1
 	sw	$t0, 0x124($gp)
 	
@@ -189,6 +189,9 @@ sdInit_err1:
 	nop
 	lw	$a0, 0x108($gp)
 	jal	putHex
+	nop
+	li	$a0, 10
+	jal	putchar
 	nop
 	
 	b	sdInit_ret
@@ -309,7 +312,7 @@ sdInitCmdErrMsg:
 sdInitCmdErrMsgIndex:
 	.byte	0, 40, 56, 68, 92, 106, 132, 154
 sdInitCMD8ErrMsg:
-	.asciiz	"Expected response 0x1aa after CMD8 but received "
+	.asciiz	"Expected response 0x1aa after CMD8 but received 0x"
 sdInitACMD41ErrMsg:
 	.asciiz	"Card did not respond properly after 200 tries of ACMD41."
 #reportLongResponse:

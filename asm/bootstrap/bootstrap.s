@@ -145,7 +145,7 @@ sleep:
 	nop
 
 prompt0:
-	.asciiz "WTCore bootloader v1.0\nInitializing SD card...\n"
+	.asciiz "ZJUNIX bootloader v1.0\nInitializing SD card...\n"
 prompt_sdErr:
 	.asciiz "Error initializing SD card."
 prompt_sdComp:
