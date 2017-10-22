@@ -154,7 +154,7 @@ endmodule
 module Handshake_freqDown( // clkAck has a lower or equal frequency than clkStb
 	input clkStb, input clkAck,
 	input stbI, output reg stbO,
-	input ackI, output ackO
+	input ackI, output reg ackO
 );
 	always @ (posedge clkAck or posedge stbI)
 	if(stbI)
@@ -162,6 +162,7 @@ module Handshake_freqDown( // clkAck has a lower or equal frequency than clkStb
 	else if(ackI)
 		stbO <= 1'b0;
 	
-	assign ackO = ackI;
+	always @ (posedge clkStb)
+		ackO <= ackI;
 	
 endmodule

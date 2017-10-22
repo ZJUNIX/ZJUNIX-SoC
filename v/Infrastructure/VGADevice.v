@@ -83,7 +83,7 @@ module VGADevice #(
 	CharROM ROM0(.clk(clkVGA), .ascii(chData[7:0]), .x(HCoord_reg), .y(VCoord[3:0]), .dot(charDot));
 
 	reg [11:0] colorMixed;
-	VGAScan #(.HCALIBRATE(10), .VCALIBRATE(8)) U0(
+	VGAScan #(.HCALIBRATE(0), .VCALIBRATE(0)) U0(
 		.clk(clkVGA), .HAddr(HCoord), .VAddr(VCoord), .HSync(HSync), .VSync(VSync),
 		.videoIn(colorMixed), .frameStart(frameStart), .videoOut(videoOut));
 	
