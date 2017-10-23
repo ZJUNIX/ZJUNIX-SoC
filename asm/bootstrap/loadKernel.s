@@ -1,8 +1,8 @@
-.globl	readSector
+.extern	readSector
 .globl	loadKernel
-.globl	puts
-.globl	putHex
-.globl	sleep
+.extern	puts
+.extern	putHex
+.extern	sleep
 
 #Variable map:
 #$s0=fatLocation

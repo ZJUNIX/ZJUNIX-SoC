@@ -1,7 +1,7 @@
 .globl	sleep
-.globl	sdInit
-.globl	loadKernel
-.globl	readSector
+.extern	sdInit
+.extern	loadKernel
+.extern	readSector
 
 .globl	puts
 .globl	putHex
@@ -14,44 +14,13 @@
 
 #Bootstrap main code
 main:
-#Clear all registers
-	move	$1, $zero
-	move	$2, $zero
-	move	$3, $zero
-	move	$4, $zero
-	move	$5, $zero
-	move	$6, $zero
-	move	$7, $zero
-	move	$8, $zero
-	move	$9, $zero
-	move	$10, $zero
-	move	$11, $zero
-	move	$12, $zero
-	move	$13, $zero
-	move	$14, $zero
-	move	$15, $zero
-	move	$16, $zero
-	move	$17, $zero
-	move	$18, $zero
-	move	$19, $zero
-	move	$20, $zero
-	move	$21, $zero
-	move	$22, $zero
-	move	$23, $zero
-	move	$24, $zero
-	move	$25, $zero
-	move	$26, $zero
-	move	$27, $zero
-	move	$28, $zero
-	move	$29, $zero
-	move	$30, $zero
-	move	$31, $zero
-
 	li	$sp, 0xbfc04000
 	jal	sleep
 	or	$a0, $zero, 4096
 	la	$t0, textOffset
 	sw	$zero, 0($t0)
+	li	$t1, 0x000fff00
+	sw	$t1, 4($t0)
 	
 	jal	fillScreen
 	move	$a0, $zero
@@ -84,24 +53,10 @@ main:
 	
 	li	$t0, 0x80001000
 	j	$t0
+
+infLoop:
 	nop
-	
-#	la	$a0, sectorBuf
-#	jal	readSector
-#	move	$a1, $zero
-	
-#	la	$t0, sectorBuf
-#	addu	$t1, $t0, 512
-#	li	$gp, 0xbfc09000
-#main_loop:
-#	lbu	$t2, 0($t0)
-#	addu	$t0, $t0, 1
-#	sw	$t2, 0x18($gp)
-#	jal	sleep
-#	li	$a0, 4096
-#	bne	$t0, $t1, main_loop
-#	nop
-	
+	nop
 	b	infLoop
 	nop
 	
@@ -123,12 +78,6 @@ main_loadErr:
 	jal	puts
 	move	$a0, $s0
 	
-	b	infLoop
-	nop
-	
-infLoop:
-	nop
-	nop
 	b	infLoop
 	nop
 	
@@ -154,10 +103,193 @@ prompt_loadErr:
 	.asciiz	"Error loading Kernel binary:\n  "
 prompt_loadComp:
 	.asciiz	"Finished loading Kernel binary. Ready to enter kernel...\n"
+.org 0x200
+	lui	$k0, 0xbfc0
+	b	exceptionHandler
+	ori	$k0, $zero, 0x0200
+#Put some text in space here between two exception vectors
+contextBuffer:
+	.space	21
+prompt_exception1:
+	.asciiz "An unhandled exception occured in the operating system.\nControl has been passed to the bootloader.\n\nProcessor registers:\n"
+prompt_reg0:
+	.asciiz "  $zero      $at       $v0       $v1       $a0       $a1       $a2       $a3\n"
+prompt_reg1:
+	.asciiz "   $t0       $t1       $t2       $t3       $t4       $t5       $t6       $t7\n"
+
+.org 0x380
+	lui	$k0, 0xbfc0
+	b	exceptionHandler
+	ori	$k0, $zero, 0x0380
+#Put some text in space here between two exception vectors
+prompt_exception2:
+	.asciiz "\n\nPress the reset button to reboot the system.\n"
+prompt_reg4:
+	.asciiz	"$BadVAddr  $Status    $Cause     $EPC\n"
+
+.org 0x400
+	li	$k0, 0xbfc00400
+
+exceptionHandler:
+	la	$k1, contextBuffer
+	sw	$at, 0x0($k1)
+	sw	$v0, 0x4($k1)
+	sw	$v1, 0x8($k1)
+	sw	$a0, 0xc($k1)
+	sw	$a1, 0x10($k1)
+	sw	$a2, 0x14($k1)
+	sw	$a3, 0x18($k1)
+	sw	$t0, 0x1c($k1)
+	sw	$t1, 0x20($k1)
+	sw	$t2, 0x24($k1)
+	sw	$t3, 0x28($k1)
+	sw	$t4, 0x2c($k1)
+	sw	$t5, 0x30($k1)
+	sw	$t6, 0x34($k1)
+	sw	$t7, 0x38($k1)
+	sw	$t8, 0x3c($k1)
+	sw	$t9, 0x40($k1)
+	sw	$gp, 0x44($k1)
+	sw	$sp, 0x48($k1)
+	sw	$fp, 0x4c($k1)
+	sw	$ra, 0x50($k1)
+
+	li	$sp, 0xbfc04000
+	la	$t0, textOffset
+	sw	$zero, 0($t0)
+	la	$t0, textColor
+	li	$t1, 0xf00fff00
+	sw	$t1, 0($t0)
+	jal	fillScreen
+	move	$a0, $t1
+	
+	la	$a0, prompt_exception1
+	jal	puts
+	nop
+	#Print all GPRs
+	la	$a0, prompt_reg0
+	jal	puts
+	nop
+	jal	putReg
+	move	$a0, $zero
+	jal	putReg
+	lw	$a0, 0x0($k1)
+	jal	putReg
+	lw	$a0, 0x4($k1)
+	jal	putReg
+	lw	$a0, 0x8($k1)
+	jal	putReg
+	lw	$a0, 0xc($k1)
+	jal	putReg
+	lw	$a0, 0x10($k1)
+	jal	putReg
+	lw	$a0, 0x14($k1)
+	jal	putReg
+	lw	$a0, 0x18($k1)
+	
+	la	$a0, prompt_reg1
+	jal	puts
+	nop
+	jal	putReg
+	lw	$a0, 0x1c($k1)
+	jal	putReg
+	lw	$a0, 0x20($k1)
+	jal	putReg
+	lw	$a0, 0x24($k1)
+	jal	putReg
+	lw	$a0, 0x28($k1)
+	jal	putReg
+	lw	$a0, 0x2c($k1)
+	jal	putReg
+	lw	$a0, 0x30($k1)
+	jal	putReg
+	lw	$a0, 0x34($k1)
+	jal	putReg
+	lw	$a0, 0x38($k1)
+	
+	la	$a0, prompt_reg2
+	jal	puts
+	nop
+	jal	putReg
+	move	$a0, $s0
+	jal	putReg
+	move	$a0, $s1
+	jal	putReg
+	move	$a0, $s2
+	jal	putReg
+	move	$a0, $s3
+	jal	putReg
+	move	$a0, $s4
+	jal	putReg
+	move	$a0, $s5
+	jal	putReg
+	move	$a0, $s6
+	jal	putReg
+	move	$a0, $s7
+	
+	la	$a0, prompt_reg3
+	jal	puts
+	nop
+	jal putReg
+	lw	$a0, 0x3c($k1)
+	jal	putReg
+	lw	$a0, 0x40($k1)
+	jal	putReg
+	move	$a0, $k0
+	jal	putReg
+	move	$a0, $k1
+	jal putReg
+	lw	$a0, 0x44($k1)
+	jal putReg
+	lw	$a0, 0x48($k1)
+	jal putReg
+	lw	$a0, 0x4c($k1)
+	jal putReg
+	lw	$a0, 0x50($k1)
+	
+	la	$a0, prompt_reg4
+	jal	puts
+	nop
+	jal	putReg
+	mfc0	$a0, $BadVAddr
+	jal	putReg
+	mfc0	$a0, $Status
+	jal	putReg
+	mfc0	$a0, $Cause
+	jal	putReg
+	mfc0	$a0, $EPC
+	
+	la	$a0, prompt_exception2
+	jal	puts
+	nop
+	
+	b	infLoop
+	nop
+	
+prompt_reg2:
+	.asciiz "   $s0       $s1       $s2       $s3       $s4       $s5       $s6       $s7\n"
+prompt_reg3:
+	.asciiz "   $t8       $t9       $k0       $k1       $gp       $sp       $fp       $ra\n"
+putReg:
+	addu	$sp, $sp, -8
+	sw	$a0, 0x0($sp)
+	sw	$ra, 0x4($sp)
+	jal	putchar
+	or	$a0, $zero, 0x20
+	jal	putHex
+	lw	$a0, 0x0($sp)
+	jal	putchar
+	or	$a0, $zero, 0x20
+	lw	$ra, 0x4($sp)
+	j	$ra
+	addu	$sp, $sp, 8
+	
 hexCharMap:
 	.asciiz	"0123456789abcdef"
 textOffset:
-	.word 0x0
+	.word	0x0
+textColor:
+	.word	0x000fff00
 putchar:
 	addu	$sp, $sp, -12
 	sw	$s0, 0x0($sp)
@@ -175,7 +307,8 @@ putchar:
 
 	and	$a0, $a0, 0xff
 	addu	$t0, $s1, $s2
-	li	$t1, 0x000fff00
+	la	$t1, textColor
+	lw	$t1, 0($t1)
 	or	$t1, $t1, $a0
 	sw	$t1, 0($t0)
 

@@ -1,14 +1,14 @@
 #SD initialize code and read sector function
 .globl	sdInit
 .globl	readSector
-.globl	sleep
+.extern	sleep
 
-.globl	puts
-.globl	putchar
-.globl	putHex
-.globl	infLoop
+.extern	puts
+.extern	putchar
+.extern	putHex
+.extern	infLoop
 
-.globl	hexCharMap
+.extern	hexCharMap
 
 sdInit:
 	addu	$sp, $sp, -12
