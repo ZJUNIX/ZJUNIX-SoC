@@ -18,6 +18,8 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
+`include "TLBDefines.vh"
+
 module TLB(input clk, input rst, input statusERL,
 	//Address translation interface: instruction
 	input [31:0] vAddrI, output [31:0] pAddrI,
@@ -49,7 +51,7 @@ module TLB(input clk, input rst, input statusERL,
 
 	wire [43:0] dataInHeader;
 	wire [49:0] dataInEntry;
-	wire [49:0] dataOutEntryI, dataOutEntryD, dataOutEntryR;
+	wire [49:0] dataOutEntryR;
 	wire [4:0] indexInHeader;
 	
 	wire [31:0] matchI, matchD, probeMatch, indexMatch;
@@ -61,19 +63,6 @@ module TLB(input clk, input rst, input statusERL,
 	
 	wire [31:0] shift;
 	
-`define PageMask 43:28
-`define VPN2 27:9
-`define G 8
-`define ASID 7:0
-`define PFN1 49:30
-`define C1 29:27
-`define D1 26
-`define V1 25
-`define PFN0 24:5
-`define C0 4:2
-`define D0 1
-`define V0 0
-
 //Interface to COP0
 	assign dataInHeader[`PageMask] = regPageMaskIn[28:13];
 	assign dataInHeader[`VPN2] = regEntryHiIn[31:13];
@@ -97,17 +86,16 @@ module TLB(input clk, input rst, input statusERL,
 	assign indexInHeader = (op == 2'b11)? regRandom: regIndexIn[4:0];
 	
 //Address translation logic
+	wire [24:0] entryDataI;
+	wire [24:0] entryDataD;
+	wire [31:0] pAddrI_internal, pAddrD_internal;
 	wire unmapI = (vAddrI[31:30] == 2'b10) | (statusERL & vAddrI[31:29] == 3'b0);
 	wire unmapD = (vAddrD[31:30] == 2'b10) | (statusERL & vAddrD[31:29] == 3'b0);
 	wire reqD_internal = reqD & ~unmapD;
-	wire missI_internal = ~|matchI;
-	wire missD_internal = ~|matchD;
 	wire uncacheI = (vAddrI[31:29] == 3'b101) | (vAddrI[31:29] == 3'b000 & statusERL);
 	wire uncacheD = (vAddrD[31:29] == 3'b101) | (vAddrD[31:29] == 3'b000 & statusERL);
-	assign missI = missI_internal & ~unmapI;
-	assign missD = missD_internal & reqD_internal;
-	wire [24:0] entryDataI = entryIndexI[0]? dataOutEntryI[49:25]: dataOutEntryI[24:0];
-	wire [24:0] entryDataD = entryIndexD[0]? dataOutEntryD[49:25]: dataOutEntryD[24:0];
+	assign missI = (~|matchI) & ~unmapI;
+	assign missD = (~|matchD) & reqD_internal;
 	assign cacheI = uncacheI? 3'b010: entryDataI[`C0];
 	assign cacheD = uncacheD? 3'b010: entryDataD[`C0];
 	assign invalidI = ~entryDataI[`V0] & ~unmapI;
@@ -117,34 +105,28 @@ module TLB(input clk, input rst, input statusERL,
 	assign IOAddrD = (vAddrD[31:29] == 3'b101);
 	wire [19:0] PFNI = entryDataI[`PFN0];
 	wire [19:0] PFND = entryDataD[`PFN0];
-	
-	wire [31:0] pAddrI_internal, pAddrD_internal;
-
 	assign pAddrI_internal[31:28] = PFNI[19:16];
 	assign pAddrI_internal[11:0] = vAddrI[11:0];
 	assign pAddrI_internal[27:12] = (PFNI[15:0] & ~pageMaskI) | (vAddrI[27:12] & pageMaskI);
 	assign pAddrD_internal[31:28] = PFND[19:16];
 	assign pAddrD_internal[11:0] = vAddrD[11:0];
 	assign pAddrD_internal[27:12] = (PFND[15:0] & ~pageMaskD) | (vAddrD[27:12] & pageMaskD);
-	assign pAddrI = (missI_internal | unmapI)? {3'b0, vAddrI[28:0]}: pAddrI_internal;
-	assign pAddrD = (missD_internal | ~reqD_internal)? {3'b0, vAddrD[28:0]}: pAddrD_internal;
-//	assign pAddrI = (missI_internal | unmapI)? vAddrI: pAddrI_internal;
-//	assign pAddrD = (missD_internal | ~reqD_internal)? vAddrD: pAddrD_internal;
+	assign pAddrI = unmapI? {3'b0, vAddrI[28:0]}: pAddrI_internal;
+	assign pAddrD = unmapD? {3'b0, vAddrD[28:0]}: pAddrD_internal;
 	
 	TLBEntry entryPool (.clk(clk), .we(op[1]),
-		.indexA(entryIndexI[5:1]), .entryA(dataOutEntryI),
-		.indexB(entryIndexD[5:1]), .entryB(dataOutEntryD),
+		.indexA(entryIndexI), .entryA(entryDataI), .pageMaskA(pageMaskI),
+		.indexB(entryIndexD), .entryB(entryDataD), .pageMaskB(pageMaskD),
 		.indexC(regIndexIn[4:0]), .entryC(dataOutEntryR), .headerC(dataOutHeader),
-		.indexD(indexInHeader), .entryD(), .headerD(),
-		.dataIn(dataInEntry), .headerIn(dataInHeader));
+		.indexD(indexInHeader), .entryD(dataInEntry), .headerD(dataInHeader));
 	
 	assign regIndexOut[4:0] = probeIndex;
 	assign regIndexOut[31] = ~|probeMatch;
 	assign regIndexOut[30:5] = 0;
 	
 	TLBHeaderInst headers(.clk(clk), .rst(rst),
-		.vAddrI(vAddrI), .matchI(matchI), .entryIndexI(entryIndexI), .pageMaskI(pageMaskI),
-		.vAddrD(vAddrD), .matchD(matchD), .entryIndexD(entryIndexD), .pageMaskD(pageMaskD),
+		.vAddrI(vAddrI), .matchI(matchI), .entryIndexI(entryIndexI), .pageMaskI(),
+		.vAddrD(vAddrD), .matchD(matchD), .entryIndexD(entryIndexD), .pageMaskD(),
 		.ASID(dataInHeader[`ASID]), .VPN2(dataInHeader[`VPN2]), .probeMatch(probeMatch), .probeIndex(probeIndex),
 		.dataInHeader(dataInHeader),
 		.indexInHeader(indexInHeader), .regWired(regWired), .indexMatch(indexMatch),

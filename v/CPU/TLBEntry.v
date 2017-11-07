@@ -18,23 +18,63 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-module TLBEntry(input clk,
-	input [4:0] indexA, output [49:0] entryA,//For instruction lookup
-	input [4:0] indexB, output [49:0] entryB,//For data lookup
+`include "TLBDefines.vh"
+
+module TLBEntry(input clk, input we,
+	input [5:0] indexA, output [24:0] entryA, output [15:0] pageMaskA,//For instruction lookup
+	input [5:0] indexB, output [24:0] entryB, output [15:0] pageMaskB,//For data lookup
 	input [4:0] indexC, output [49:0] entryC, output [43:0] headerC,//For TLBR; indexC connected to Index register
-	input [4:0] indexD, output [49:0] entryD, output [43:0] headerD,//For TLBWI/TLBWR; indexD connected to Index or Random
-	input we, input [49:0] dataIn, input [43:0] headerIn
+	input [4:0] indexD, input  [49:0] entryD, input  [43:0] headerD//For TLBWI/TLBWR; indexD connected to Index or Random
 );
+	//Complete header and entry info
+	reg [93:0] tlbPool[31:0];
+	always @ (posedge clk) if(we) tlbPool[indexD] <= {entryD, headerD};
+	assign {entryC, headerC} = tlbPool[indexC];
 	
-	RAM32M #(.INIT_A(64'h0), .INIT_B(64'h0), .INIT_C(64'h0), .INIT_D(64'h0))
-		entryPool[24:0] (.WCLK(clk), .WE(we),
-		.ADDRA(indexA), .ADDRB(indexB), .ADDRC(indexC), .ADDRD(indexD),
-		.DIA(dataIn), .DIB(dataIn), .DIC(dataIn), .DID(dataIn),
-		.DOA(entryA), .DOB(entryB), .DOC(entryC), .DOD(entryD));
-	RAM32M #(.INIT_A(64'h0), .INIT_B(64'h0), .INIT_C(64'h0), .INIT_D(64'h0))
-		headerPool[10:0] (.WCLK(clk), .WE(we),
-		.ADDRA(indexC), .ADDRB(indexC), .ADDRC(indexD), .ADDRD(indexD),
-		.DIA(headerIn[43:22]), .DIB(headerIn[21:0]), .DIC(headerIn[43:22]), .DID(headerIn[21:0]),
-		.DOA(headerC[43:22]), .DOB(headerC[21:0]), .DOC(headerD[43:22]), .DOD(headerD[21:0]));
+	//PageMask
+	reg [15:0] pageMaskPool[31:0];
+	always @ (posedge clk) if(we) pageMaskPool[indexD] <= headerD[`PageMask];
+	assign pageMaskA = pageMaskPool[indexA[5:1]];
+	assign pageMaskB = pageMaskPool[indexB[5:1]];
+
+	//Entry info
+	wire [5:0] entryWriteIndex;
+	wire [24:0] entryWriteData;
+	wire entryWe;
+	reg [24:0] entryPool[63:0];
+	always @ (posedge clk) if(entryWe) entryPool[entryWriteIndex] <= entryWriteData;
+	assign entryA = entryPool[indexA];
+	assign entryB = entryPool[indexB];
 	
+	reg we_reg;
+	reg [4:0] indexD_reg;
+	reg [24:0] dataIn_reg;
+	always @ (posedge clk)
+	begin
+		we_reg <= we;
+		indexD_reg <= indexD;
+		dataIn_reg <= entryD[49:25];
+	end
+	
+	assign entryWriteIndex = we_reg? {indexD_reg, 1'b1}: {indexD, 1'b0};
+	assign entryWriteData = we_reg? dataIn_reg: entryD[24:0];
+	assign entryWe = we | we_reg;
+	
+	integer i;
+	initial begin
+		for(i = 0; i < 32; i = i+1)
+		begin
+			tlbPool[i] = 0;
+			pageMaskPool[i] = 0;
+		end
+		for(i = 0; i < 64; i = i+1)
+			entryPool[i] = 0;
+//		pageMaskPool[30] = 16'hffff;
+//		pageMaskPool[31] = 16'hffff;
+//		entryPool[60] = {20'h00000, 5'b01011};
+//		entryPool[61] = {20'h10000, 5'b01011};
+//		entryPool[62] = {20'h00000, 5'b01111};
+//		entryPool[63] = {20'h10000, 5'b01111};
+	end
+
 endmodule

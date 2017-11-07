@@ -20,10 +20,10 @@
 //////////////////////////////////////////////////////////////////////////////////
 module CPUCacheTop(
 	input clkCPU, input clkDDR, input rst, input [4:0] interrupt,
-	//IBus signals, referenced to ~clkCPU
+	//IBus signals
 	output [31:0] addrIBus, input [31:0] dinIBus,
 	output stbIBus, input nakIBus,
-	//DBus signals, referenced to clkCPU
+	//DBus signals
 	output [31:0] addrDBus, output [31:0] doutDBus, input [31:0] dinDBus,
 	output stbDBus, output [3:0] dmDBus, output weDBus, input nakDBus,
 	//DDR memory signals as wishbone master
@@ -37,34 +37,58 @@ module CPUCacheTop(
 	
 	wire iStall, dStall;
 	wire iCacheStall, dCacheStall;
-	wire ioAddrI, ioAddrD;
-	reg ioAddrD_reg;
+	wire mappedIBus, mappedDBus;
+	reg mappedDBus_reg;
+//	reg [31:0] addrDBusMapped_reg;
+//	reg dCacheStb_reg;
+//	reg [31:0] doutDBus_reg;
+//	reg [3:0] dmDBus_reg;
+//	reg weDBus_reg;
+//	reg dCacheOp_reg;
+	
+	
 	wire [31:0] cpuInstIn, cpuDataIn;
 	wire [31:0] iCacheOut, dCacheOut;
 	wire [31:0] addrIBusMapped, addrDBusMapped;
-	wire instStb, memStb;
+	wire iCacheStb, dCacheStb;
 	wire iCacheOp, dCacheOp;
 	
 	wire [31:0] dbg_dcacheWay0, dbg_dcacheWay1;
 	
 	PCPU cpu(.clk(clkCPU), .rst(rst), .iStall(iStall), .dStall(dStall),
-		.iBusAddr(addrIBus), .iBusAddrMapped(addrIBusMapped),
-		.instReq(instStb), .IOAddrI(ioAddrI), .instIn(cpuInstIn),
-		.dBusAddr(addrDBus), .dBusAddrMapped(addrDBusMapped),
-		.memReq(memStb), .IOAddrD(ioAddrD), .dataOut(doutDBus),
+//		.iBusAddr(addrIBus), .iBusAddrMapped(addrIBusMapped),
+//		.instReq(instStb), .IOAddrI(ioAddrI), .instIn(cpuInstIn),
+		.addrIBus(addrIBus), .stbIBus(stbIBus),
+		.addrIBusMapped(addrIBusMapped), .stbIBusMapped(iCacheStb),
+		.mappedIBus(mappedIBus), .instIn(cpuInstIn),
+		
+//		.dBusAddr(addrDBus), .dBusAddrMapped(addrDBusMapped),
+//		.memReq(memStb), .IOAddrD(ioAddrD), .dataOut(doutDBus),
+//		.dataMask(dmDBus), .memWE(weDBus), .dataIn(cpuDataIn),
+
+		.addrDBus(addrDBus), .stbDBus(stbDBus),
+		.addrDBusMapped(addrDBusMapped), .stbDBusMapped(dCacheStb),
+		.mappedDBus(mappedDBus), .dataOut(doutDBus),
 		.dataMask(dmDBus), .memWE(weDBus), .dataIn(cpuDataIn),
+
 		.iCacheOp(iCacheOp), .dCacheOp(dCacheOp),
 		.INT(interrupt),
 		.dbg_vPC(dbg_vPC), .dbg_vAddr(dbg_vAddr),
 		.dbg_IDPC(dbg_IDPC), .dbg_EXPC(dbg_EXPC), .dbg_MEMPC(dbg_MEMPC));
 
 	always @ (posedge clkCPU)
-		if(~dStall) ioAddrD_reg <= ioAddrD;
+	if(~dStall)begin
+//		addrDBusMapped_reg <= addrDBusMapped;
+//		dCacheStb_reg <= dCacheStb;
+		mappedDBus_reg <= mappedDBus;
+//		doutDBus_reg <= doutDBus;
+//		dmDBus_reg <= dmDBus;
+//		weDBus_reg <= weDBus;
+//		dCacheOp_reg <= dCacheOp;
+	end
 	
-	assign cpuInstIn = ioAddrI? dinIBus: iCacheOut;
-	assign cpuDataIn = ioAddrD_reg? dinDBus: dCacheOut;
-	assign stbIBus = instStb & ioAddrI;
-	assign stbDBus = memStb & ioAddrD;
+	assign cpuInstIn = mappedIBus? iCacheOut: dinIBus;
+	assign cpuDataIn = mappedDBus_reg? dCacheOut: dinDBus;
 	assign iStall = iCacheStall | nakIBus;
 	assign dStall = dCacheStall | nakDBus;
 	
@@ -77,17 +101,18 @@ module CPUCacheTop(
 	wire ws_ack_m0, ws_ack_m1;
 
 	ICache icache(.clkCPU(clkCPU), .clkDDR(clkDDR), .rst(rst),
-		.PCIn(addrIBusMapped), .req(instStb & ~ioAddrI), .instOut(iCacheOut), .iStall(iCacheStall),
+		.PCIn(addrIBusMapped), .req(iCacheStb), .instOut(iCacheOut), .iStall(iCacheStall),
 		.invalidateAddr(addrDBusMapped), .invalidateReq(iCacheOp),
 		.ws_addr(ws_addr_m0), .ws_din(ws_din_m0), .ws_cyc(ws_cyc_m0),
 		.ws_stb(ws_stb_m0), .ws_ack(ws_ack_m0));
-	assign ws_dout_m0 = 128'h0;
+	assign ws_dout_m0 = 512'h0;
 	assign ws_dm_m0 = 16'h0;
 	assign ws_we_m0 = 1'b0;
 	
 	DCache dcache(.clkCPU(clkCPU), .clkDDR(clkDDR), .rst(rst),
-		.addrIn(addrDBusMapped), .req(memStb & ~ioAddrD), .dataIn(doutDBus),
-		.dm(dmDBus), .we(weDBus), .dataOut(dCacheOut), .dStall(dCacheStall), .invalidate(dCacheOp),
+		.addrIn(addrDBusMapped), .req(dCacheStb), .dataIn(doutDBus),
+		.dm(dmDBus), .we(weDBus), .dataOut(dCacheOut), .dStall(dCacheStall),
+		.invalidate(dCacheOp),
 		.ws_addr(ws_addr_m1), .ws_dout(ws_dout_m1), .ws_dm(ws_dm_m1),
 		.ws_we(ws_we_m1), .ws_cyc(ws_cyc_m1), .ws_stb(ws_stb_m1), .ws_ack(ws_ack_m1),
 		.ws_din(ws_din_m1)
@@ -118,8 +143,7 @@ module CPUCacheTop(
 //		.probe0(addrIBus), .probe1(cpuInstIn),
 //		.probe2(addrDBus), .probe3(cpuDataIn), .probe4(doutDBus),
 //		.probe5(dmDBus),
-//		.probe6(memStb), .probe7(dCacheStall), .probe8(iCacheStall),
-//		.probe9(dbg_dcacheWay0), .probe10(dbg_dcacheWay1)
+//		.probe6(iCacheStb), .probe7(dCacheStall), .probe8(iCacheStall)
 //	);
 	
 //	dbgModule dbg(.clk(clkDDR),

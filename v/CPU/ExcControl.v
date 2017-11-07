@@ -34,7 +34,7 @@ module ExcControl(input clk, input rst, input stall,
 	input ID_BD, input EX_BD, input Mem_BD,
 	//Output to CPU pipeline
 	output ID_excFlush, output EX_excFlush, output Mem_excFlush,
-	output [31:0] excPC, output useExcPC,
+	output [31:0] excPC, output useExcPC, output Mem_excFlush_unmapped,
 	//COP0 interface
 	input [31:0] regEPCIn, input [31:0] regErrorEPCIn,
 	input statusEXL, input statusBEV, input statusERL, input causeIV,
@@ -54,6 +54,8 @@ module ExcControl(input clk, input rst, input stall,
 	assign ID_excFlush = _IF_exc | _ID_exc | _EX_exc | _eret;
 	assign EX_excFlush = _ID_exc | _EX_exc | _eret;
 	assign Mem_excFlush = _EX_exc | _eret;
+	
+	assign Mem_excFlush_unmapped = ((overflow | trap | adEL | adES) & ~pipelineFlush[0]) | _eret;
 	
 	reg [3:0] vectorOffset;
 	always @*

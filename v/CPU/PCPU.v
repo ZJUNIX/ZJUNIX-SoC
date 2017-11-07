@@ -20,19 +20,18 @@
 //////////////////////////////////////////////////////////////////////////////////
 module PCPU(
 	input clk, input rst, input iStall, input dStall,
-	
-	output [31:0] iBusAddr, output [31:0] iBusAddrMapped,
-	output instReq, output IOAddrI, input [31:0] instIn,
-	
-	output [31:0] dBusAddr, output [31:0] dBusAddrMapped,
-	output memReq, output IOAddrD, output [31:0] dataOut,
+	//IBus signals: data must return before next clock edge
+	output [31:0] addrIBus, output stbIBus,
+	output [31:0] addrIBusMapped, output stbIBusMapped,
+	output mappedIBus, input [31:0] instIn,
+
+	output [31:0] addrDBus, output stbDBus,
+	output [31:0] addrDBusMapped, output stbDBusMapped,
+	output mappedDBus, output [31:0] dataOut,
 	output [3:0] dataMask, output memWE, input [31:0] dataIn,
 	
 	output iCacheOp, output dCacheOp,
 	
-//	output [31:0] PCOut, output IOAddrI, output instReq, input [31:0] instIn,
-//	output [31:0] addrOut, output IOAddrD, output [31:0] dataOut, output [3:0] dataMask, output memWE,
-//	output memReq,  output iCacheOp, output dCacheOp, input [31:0] dataIn,
 	input [4:0] INT,
 	output [31:0] dbg_vPC, output [31:0] dbg_vAddr,
 	output [31:0] dbg_IDPC, output [31:0] dbg_EXPC, output [31:0] dbg_MEMPC
@@ -43,6 +42,7 @@ module PCPU(
 	//A flush to a stage should stall all stages before it.
 	wire masterStall = iStall | dStall;
 	wire ID_excFlush, EX_excFlush, MEM_excFlush;
+	wire MEM_excFlush_unmapped;
 	wire [4:0] INT_sync;
 	
 	//IF stage signals
@@ -129,7 +129,7 @@ module PCPU(
 	wire excReq;
 
 	TranslatePredict TP(.clk(clk), .rst(rst), .stall(masterStall),
-		.vPC(IF_PC), .pPCin(pPC_TLB), .pPCOut(iBusAddrMapped), .pageMask(pageMask_TLB),
+		.vPC(IF_PC), .pPCin(pPC_TLB), .pPCOut(addrIBusMapped), .pageMask(pageMask_TLB),
 		.flush(TP_flushOut));
 	BranchPredictor BP(.clk(clk), .rst(rst), .stall(masterStall | ID_stall), .exc_flush(excReq),
 		.PC(IF_PC), .branchDest(ID_nextPC), .branchCond(~(ID_branchCond[2] & ID_branchCond[1])),
@@ -196,12 +196,13 @@ module PCPU(
 		.rsAddr(ID_inst[25:21]), .rtAddr(ID_inst[20:16]), .rdAddr(MEM_wbReg),
 		.rtAddrDelay(EX_inst[20:16]), .rs(rs), .rt(rt), .rtDelay(rtDelay), .rd(MEM_wbData));
 	
+	wire IOAddrI, IOAddrD;
 	TLB tlb(.clk(clk), .rst(rst), .statusERL(cp0_statusERL),
 		.vAddrI(IF_PC), .pAddrI(pPC_TLB), .IOAddrI(IOAddrI),
 		.missI(exc_TLBMissI), .invalidI(exc_TLBInvalidI),
 		.pageMaskI_out(pageMask_TLB),
 		.vAddrD(EX_memAddr), .reqD(EX_memReq), .writeD(EX_memW_1b),
-		.pAddrD(dBusAddrMapped), .IOAddrD(IOAddrD),
+		.pAddrD(addrDBusMapped), .IOAddrD(IOAddrD),
 		.missD(exc_TLBMissD), .invalidD(exc_TLBInvalidD), .modifiedD(exc_TLBModD),
 		
 		.regEntryLo0In(TLB_CP0[31:0]), .regEntryLo0Out(TLB_CP0[63:32]),
@@ -222,7 +223,7 @@ module PCPU(
 		.ID_PC(ID_PC), .EX_PC(EX_PC), .Mem_PC(MEM_PC),
 		.ID_BD(ID_bd), .EX_BD(EX_bd), .Mem_BD(MEM_bd),
 		.ID_excFlush(ID_excFlush), .EX_excFlush(EX_excFlush), .Mem_excFlush(MEM_excFlush),
-		.excPC(PC_exc), .useExcPC(excReq),
+		.excPC(PC_exc), .useExcPC(excReq), .Mem_excFlush_unmapped(MEM_excFlush_unmapped),
 		.regEPCIn(CP0_EXC_EPC), .regErrorEPCIn(CP0_EXC_ErrorEPC),
 		.statusEXL(cp0_statusEXL), .statusERL(cp0_statusERL),
 		.statusBEV(cp0_statusBEV), .causeIV(cp0_causeIV),
@@ -263,12 +264,16 @@ module PCPU(
 	assign ID_stall = stallRs | stallRt | EX_stall;
 	assign IF_stall = TP_flushOut | ID_stall;
 
-	assign memReq = EX_memReq & ~MEM_excFlush;
+	assign stbDBusMapped = EX_memReq & ~MEM_excFlush & mappedDBus;
+	assign stbDBus = EX_memReq & ~MEM_excFlush_unmapped & ~mappedDBus;
 	assign iCacheOp = EX_iCacheOp & ~MEM_excFlush;
 	assign dCacheOp = EX_dCacheOp & ~MEM_excFlush;
 	assign dataMask = EX_memW;
 	assign memWE = EX_memW_1b;
-	assign instReq = ~ID_excFlush;
+	assign stbIBusMapped = ~ID_excFlush & mappedIBus;
+	assign stbIBus = ~mappedIBus;
+//	assign stbIBusMapped = 1'b1;
+//	assign stbIBus = 1'b1;
 	
 	//Others
 	//Interrupt signal sync logic: rising edge trigger
@@ -286,7 +291,9 @@ module PCPU(
 	assign dbg_EXPC = EX_PC;
 	assign dbg_MEMPC = MEM_PC;
 	
-	assign iBusAddr = {3'b0, IF_PC[28:0]};
-	assign dBusAddr = {3'b0, EX_memAddr[28:0]};
+	assign addrIBus = {3'b0, IF_PC[28:0]};
+	assign addrDBus = {3'b0, EX_memAddr[28:0]};
+	assign mappedIBus = ~IOAddrI;
+	assign mappedDBus = ~IOAddrD;
 	
 endmodule
