@@ -34,8 +34,8 @@ module TLBEntry(input clk, input we,
 	//PageMask
 	reg [15:0] pageMaskPool[31:0];
 	always @ (posedge clk) if(we) pageMaskPool[indexD] <= headerD[`PageMask];
-	assign pageMaskA = pageMaskPool[indexA[5:1]];
-	assign pageMaskB = pageMaskPool[indexB[5:1]];
+	assign pageMaskA = pageMaskPool[indexA[4:0]];
+	assign pageMaskB = pageMaskPool[indexB[4:0]];
 
 	//Entry info
 	wire [5:0] entryWriteIndex;
@@ -56,7 +56,7 @@ module TLBEntry(input clk, input we,
 		dataIn_reg <= entryD[49:25];
 	end
 	
-	assign entryWriteIndex = we_reg? {indexD_reg, 1'b1}: {indexD, 1'b0};
+	assign entryWriteIndex = we_reg? {1'b1, indexD_reg}: {1'b0, indexD};
 	assign entryWriteData = we_reg? dataIn_reg: entryD[24:0];
 	assign entryWe = we | we_reg;
 	

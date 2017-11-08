@@ -18,7 +18,10 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-module ICache(
+module ICache #(
+	parameter CLKCPU_PERIOD = 10,
+	parameter CLKDDR_PERIOD = 5
+) (
 	input clkCPU, input clkDDR, input rst,
 	//Interface to CPU, synchronous to clkCPU
 	input [31:0] PCIn, input req, output [31:0] instOut, output iStall,
@@ -49,7 +52,8 @@ module ICache(
 		.replaceStb(replaceStb_DDR), .replaceBlock(replaceBlock_DDR), .completeStb(completeStb_DDR),
 		.ws_addr(ws_addr), .ws_din(ws_din), .ws_cyc(ws_cyc), .ws_stb(ws_stb), .ws_ack(ws_ack));
 	
-	Handshake_freqDown completeCross(.clkStb(clkDDR), .clkAck(clkCPU),
+	AsyncHandshake #(.STB_FREQ(1000 / CLKDDR_PERIOD), .ACK_FREQ(1000 / CLKCPU_PERIOD))
+		completeCross(.clkStb(clkDDR), .clkAck(clkCPU),
 		.stbI(completeStb_DDR), .stbO(completeStb_CPU),
 		.ackI(completeStb_CPU), .ackO());
 	ClockDomainCross #(0, 1) replaceStbCross(.clki(clkCPU), .clko(clkDDR), .i(replaceStb_CPU), .o(replaceStb_DDR));

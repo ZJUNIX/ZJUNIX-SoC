@@ -39,7 +39,7 @@ module Cp0(
 	input [31:0] regPageMaskIn, output [31:0] regPageMaskOut,
 	input [31:0] regIndexIn, output [31:0] regIndexOut,
 	output [4:0] regWiredOut, input [4:0] regRandomIn,
-	output [1:0] TLBop,
+	output regWiredWrite, output [1:0] TLBop,
 	
 	//Interface to exception control unit
 	output [31:0] regEPCOut, output [31:0] regErrorEPCOut,
@@ -106,9 +106,10 @@ module Cp0(
 	Cp0Reg #(.SOFTWARE_MASK(32'h0000001f), .RESET_STATE(0)) RegIndex(.clk(clk), .rst(rst),
 		.sDin(dataIn_reg), .sWe(cp0RegWe[0]), .hDin(regIndexDin), .hWe(regIndexWe), .dout(regIndex));
 	
-	Cp0Reg #(.SOFTWARE_MASK(0), .RESET_STATE(32'h0000001f)) RegRandom(.clk(clk), .rst(rst),
-		.sDin(dataIn_reg), .sWe(cp0RegWe[1]), .hDin(regRandomDin), .hWe(regRandomWe), .dout(regRandom));
-
+//	Cp0Reg #(.SOFTWARE_MASK(0), .RESET_STATE(32'h0000001f)) RegRandom(.clk(clk), .rst(rst),
+//		.sDin(dataIn_reg), .sWe(cp0RegWe[1]), .hDin(regRandomDin), .hWe(regRandomWe), .dout(regRandom));
+	assign regRandom = regRandomDin;
+	
 	Cp0Reg #(.SOFTWARE_MASK(32'h03ffffff), .RESET_STATE(0)) RegEntryLo0(.clk(clk), .rst(rst),
 		.sDin(dataIn_reg), .sWe(cp0RegWe[2]), .hDin(regEntryLo0Din), .hWe(regEntryLo0We), .dout(regEntryLo0));
 
@@ -384,6 +385,7 @@ module Cp0(
 		end
 	end
 	assign TLBop = tlbOp;
+	assign regWiredWrite = cp0RegWe[6];
 	assign copAccess[3:1] = regStatus[31:29];
 	assign copAccess[0] = regStatus[28] | ~userMode;
 	

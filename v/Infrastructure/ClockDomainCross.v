@@ -19,79 +19,79 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 //This module ensures a positive pulse on I will be captured on O, when clki has a higher frequency than clko.
-module ClockDomainCross_extend(
-	input clki, input clko, input i, output o
-);
-	reg i_reg;
-	reg o_feedback;
-	reg o_reg;
+//module ClockDomainCross_extend(
+//	input clki, input clko, input i, output o
+//);
+//	reg i_reg;
+//	reg o_feedback;
+//	reg o_reg;
 
-	always @ (posedge clki)
-	begin
-		o_feedback <= o;
-		if(i | o_feedback)
-			i_reg <= i;
-	end
-	always @ (posedge clko) o_reg <= i | i_reg;
-	assign o = o_reg;
+//	always @ (posedge clki)
+//	begin
+//		o_feedback <= o;
+//		if(i | o_feedback)
+//			i_reg <= i;
+//	end
+//	always @ (posedge clko) o_reg <= i | i_reg;
+//	assign o = o_reg;
 	
-endmodule
+//endmodule
 
-module PulseExtender #(
-	parameter EXT_LENGTH = 1,
-	parameter EXT_LENGTH_BITS = 1,
-	parameter O_REG = 0
-)(
-	input clk, input I, output reg O
-);
-	reg [EXT_LENGTH_BITS-1:0] counter = 0;
+//module PulseExtender #(
+//	parameter EXT_LENGTH = 1,
+//	parameter EXT_LENGTH_BITS = 1,
+//	parameter O_REG = 0
+//)(
+//	input clk, input I, output reg O
+//);
+//	reg [EXT_LENGTH_BITS-1:0] counter = 0;
 	
-	always @ (posedge clk)
-	if(I)
-		counter <= EXT_LENGTH;
-	else if(|counter)
-		counter <= counter - 1'b1;
+//	always @ (posedge clk)
+//	if(I)
+//		counter <= EXT_LENGTH;
+//	else if(|counter)
+//		counter <= counter - 1'b1;
 	
-	generate
-	if(O_REG)
-	begin: O_REGISTERED
-		always @ (posedge clk) O <= I | (|counter);
-	end
-	else
-	begin: O_UNREGISTERED
-		always @* O <= I | (|counter);
-	end
-	endgenerate
+//	generate
+//	if(O_REG)
+//	begin: O_REGISTERED
+//		always @ (posedge clk) O <= I | (|counter);
+//	end
+//	else
+//	begin: O_UNREGISTERED
+//		always @* O <= I | (|counter);
+//	end
+//	endgenerate
 
-endmodule
+//endmodule
 
-module PulseLimiter #(
-	parameter LIMIT_LENGTH = 1,
-	parameter LIMIT_LENGTH_BITS = 1,
-	parameter O_REG = 0
-)(
-	input clk, input I, output reg O
-);
-	reg [LIMIT_LENGTH_BITS-1:0] counter;
+//module PulseLimiter #(
+//	parameter LIMIT_LENGTH = 1,
+//	parameter LIMIT_LENGTH_BITS = 1,
+//	parameter O_REG = 0
+//)(
+//	input clk, input I, output reg O
+//);
+//	reg [LIMIT_LENGTH_BITS-1:0] counter;
 	
-	always @ (posedge clk)
-	if(~I)
-		counter <= LIMIT_LENGTH;
-	else if(|counter)
-		counter <= counter - 1'b1;
+//	always @ (posedge clk)
+//	if(~I)
+//		counter <= LIMIT_LENGTH;
+//	else if(|counter)
+//		counter <= counter - 1'b1;
 
-	generate
-	if(O_REG)
-	begin: O_REGISTERED
-		always @ (posedge clk) O <= I & |counter;
-	end
-	else
-	begin: O_UNREGISTERED
-		always @* O <= I & |counter;
-	end
-	endgenerate
+//	generate
+//	if(O_REG)
+//	begin: O_REGISTERED
+//		always @ (posedge clk) O <= I & |counter;
+//	end
+//	else
+//	begin: O_UNREGISTERED
+//		always @* O <= I & |counter;
+//	end
+//	endgenerate
 	
-endmodule
+//endmodule
 
 module ClockDomainCross #(
 	parameter I_REG = 1,
@@ -165,4 +165,22 @@ module Handshake_freqDown( // clkAck has a lower or equal frequency than clkStb
 	always @ (posedge clkStb)
 		ackO <= ackI;
 	
+endmodule
+
+module AsyncHandshake #(
+	parameter STB_FREQ = 100,
+	parameter ACK_FREQ = 100
+)(
+	input clkStb, input clkAck,
+	input stbI, output stbO,
+	input ackI, output ackO
+);
+
+	generate if(STB_FREQ < ACK_FREQ)
+	begin: FREQ_UP
+		Handshake_freqUp(clkStb, clkAck, stbI, stbO, ackI, ackO);
+	end else begin: FREQ_DOWN
+		Handshake_freqDown(clkStb, clkAck, stbI, stbO, ackI, ackO);
+	end endgenerate
+
 endmodule

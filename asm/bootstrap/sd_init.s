@@ -309,7 +309,7 @@ sdInitCmdErrMsgIndex:
 sdInitCMD8ErrMsg:
 	.asciiz	"Expected response 0x1aa after CMD8 but received 0x"
 sdInitACMD41ErrMsg:
-	.asciiz	"Card did not respond properly after 200 tries of ACMD41."
+	.asciiz	"Card did not respond properly after 200 tries of ACMD41.\n"
 #reportLongResponse:
 #	lw	$t0, 0x114($gp)
 #	srl	$t1, $t0, 24

@@ -18,7 +18,9 @@
 // Additional Comments: 
 //
 //////////////////////////////////////////////////////////////////////////////////
-module PCPU(
+module PCPU #(
+	parameter PERIOD = 10
+)(
 	input clk, input rst, input iStall, input dStall,
 	//IBus signals: data must return before next clock edge
 	output [31:0] addrIBus, output stbIBus,
@@ -103,7 +105,7 @@ module PCPU(
 	wire MEM_bd;
 	
 	//TLB to Cop0 interface; condensed in one wire declaration
-	wire [331:0] TLB_CP0;
+	wire [332:0] TLB_CP0;
 	//Exception control to Cop0 interface
 	wire [31:0] CP0_EXC_EPC;
 	wire [31:0] CP0_EXC_ErrorEPC;
@@ -211,7 +213,7 @@ module PCPU(
 		.regPageMaskIn(TLB_CP0[223:192]), .regPageMaskOut(TLB_CP0[255:224]),
 		.regIndexIn(TLB_CP0[287:256]), .regIndexOut(TLB_CP0[319:288]),
 		.regWired(TLB_CP0[324:320]), .regRandom(TLB_CP0[329:325]),
-		.op(TLB_CP0[331:330]));
+		.regWiredWrite(TLB_CP0[330]), .op(TLB_CP0[332:331]));
 	
 	ExcControl exceptionCtrl(.clk(clk), .rst(rst), .stall(masterStall),
 		.adErrI(exc_adErrI), .TLBMissI(exc_TLBMissI & ~exc_adErrI), .TLBInvalidI(exc_TLBInvalidI), .interrupt(exc_interrupt),
@@ -245,7 +247,7 @@ module PCPU(
 		.regPageMaskOut(TLB_CP0[223:192]), .regPageMaskIn(TLB_CP0[255:224]),
 		.regIndexOut(TLB_CP0[287:256]), .regIndexIn(TLB_CP0[319:288]),
 		.regWiredOut(TLB_CP0[324:320]), .regRandomIn(TLB_CP0[329:325]),
-		.TLBop(TLB_CP0[331:330]),
+		.regWiredWrite(TLB_CP0[330]), .TLBop(TLB_CP0[332:331]),
 		
 		.regEPCOut(CP0_EXC_EPC), .regErrorEPCOut(CP0_EXC_ErrorEPC),
 		.statusEXL(cp0_statusEXL), .statusERL(cp0_statusERL),

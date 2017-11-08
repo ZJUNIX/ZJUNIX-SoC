@@ -18,7 +18,11 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-module DCache(input clkCPU, input clkDDR, input rst,
+module DCache #(
+	parameter CLKCPU_PERIOD = 10,
+	parameter CLKDDR_PERIOD = 5
+) (
+	input clkCPU, input clkDDR, input rst,
 	//Interface to CPU, synchronous to clkCPU
 	input [31:0] addrIn, input req, input [31:0] dataIn,
 	input [3:0] dm, input we, output [31:0] dataOut, output dStall, input invalidate,
@@ -77,13 +81,15 @@ module DCache(input clkCPU, input clkDDR, input rst,
 	ClockDomainCross #(0, 1) oldTagCross[16:0](.clki(clkCPU), .clko(clkDDR), .i(oldTag_CPU), .o(oldTag_DDR));
 	ClockDomainCross #(0, 1) newTagCross[16:0](.clki(clkCPU), .clko(clkDDR), .i(newTag_CPU), .o(newTag_DDR));
 	
-	Handshake_freqUp replaceCross(.clkStb(clkCPU), .clkAck(clkDDR),
+	AsyncHandshake #(.STB_FREQ(1000 / CLKCPU_PERIOD), .ACK_FREQ(1000 / CLKDDR_PERIOD))
+		replaceCross(.clkStb(clkCPU), .clkAck(clkDDR),
 		.stbI(replaceStb_CPU), .stbO(replaceStb_DDR),
 		.ackI(replaceAck_DDR), .ackO(replaceAck_CPU));
-	Handshake_freqDown completeCross(.clkStb(clkDDR), .clkAck(clkCPU),
+	AsyncHandshake #(.STB_FREQ(1000 / CLKDDR_PERIOD), .ACK_FREQ(1000 / CLKCPU_PERIOD))
+		completeCross(.clkStb(clkDDR), .clkAck(clkCPU),
 		.stbI(completeStb_DDR), .stbO(completeStb_CPU),
 		.ackI(completeStb_CPU), .ackO());
-	
+
 endmodule
 
 module DCacheFSM_CPU(

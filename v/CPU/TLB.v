@@ -39,7 +39,7 @@ module TLB(input clk, input rst, input statusERL,
 	input [31:0] regPageMaskIn, output [31:0] regPageMaskOut,
 	input [31:0] regIndexIn, output [31:0] regIndexOut,
 	input [4:0] regWired, output [4:0] regRandom,
-	input [1:0] op//00=normal, 01=TLBR, 10=TLBWI, 11=TLBWR; TLBP and TLBR are always enabled
+	input regWiredWrite, input [1:0] op//00=normal, 01=TLBR, 10=TLBWI, 11=TLBWR; TLBP and TLBR are always enabled
 );
 //Note: VIOLATION OF MIPS32 SPECIFICATION:
 //1. The value of Random register will not change to 31 after the Wired register is written,
@@ -51,17 +51,16 @@ module TLB(input clk, input rst, input statusERL,
 
 	wire [43:0] dataInHeader;
 	wire [49:0] dataInEntry;
-	wire [49:0] dataOutEntryR;
+	wire [49:0] dataOutEntry;
 	wire [4:0] indexInHeader;
 	
-	wire [31:0] matchI, matchD, probeMatch, indexMatch;
+	wire [31:0] matchI, matchD, probeMatch;
 
 	wire [43:0] dataOutHeader;
 	wire [5:0] entryIndexI, entryIndexD;
 	wire [15:0] pageMaskI, pageMaskD;
-	wire [4:0] probeIndex;
 	
-	wire [31:0] shift;
+//	wire [31:0] shift;
 	
 //Interface to COP0
 	assign dataInHeader[`PageMask] = regPageMaskIn[28:13];
@@ -79,10 +78,10 @@ module TLB(input clk, input rst, input statusERL,
 	
 	assign regPageMaskOut = {3'h0, dataOutHeader[`PageMask], 13'h0};
 	assign regEntryHiOut = {dataOutHeader[`VPN2], 5'h0, dataOutHeader[`ASID]};
-	assign regEntryLo1Out = {6'h0, dataOutEntryR[`PFN1], dataOutEntryR[`C1], dataOutEntryR[`D1], dataOutEntryR[`V1], dataOutHeader[`G]};
-	assign regEntryLo0Out = {6'h0, dataOutEntryR[`PFN0], dataOutEntryR[`C0], dataOutEntryR[`D0], dataOutEntryR[`V0], dataOutHeader[`G]};
+	assign regEntryLo1Out = {6'h0, dataOutEntry[`PFN1], dataOutEntry[`C1], dataOutEntry[`D1], dataOutEntry[`V1], dataOutHeader[`G]};
+	assign regEntryLo0Out = {6'h0, dataOutEntry[`PFN0], dataOutEntry[`C0], dataOutEntry[`D0], dataOutEntry[`V0], dataOutHeader[`G]};
 
-	assign shift = op[1]? 32'hffffffff + {indexMatch[30:0], 1'b0}: 32'h0;
+//	assign shift = op[1]? 32'hffffffff + {indexMatch[30:0], 1'b0}: 32'h0;
 	assign indexInHeader = (op == 2'b11)? regRandom: regIndexIn[4:0];
 	
 //Address translation logic
@@ -117,23 +116,46 @@ module TLB(input clk, input rst, input statusERL,
 	TLBEntry entryPool (.clk(clk), .we(op[1]),
 		.indexA(entryIndexI), .entryA(entryDataI), .pageMaskA(pageMaskI),
 		.indexB(entryIndexD), .entryB(entryDataD), .pageMaskB(pageMaskD),
-		.indexC(regIndexIn[4:0]), .entryC(dataOutEntryR), .headerC(dataOutHeader),
+		.indexC(regIndexIn[4:0]), .entryC(dataOutEntry), .headerC(dataOutHeader),
 		.indexD(indexInHeader), .entryD(dataInEntry), .headerD(dataInHeader));
 	
-	assign regIndexOut[4:0] = probeIndex;
+	wire [31:0] headerWE = 1 << indexInHeader;
+	wire [31:0] oddI, oddD;
+	TLBHeader headers[31:0] (.clk(clk), .we(headerWE),
+		.vAddrI(vAddrI), .matchI(matchI), .oddI(oddI),
+		.vAddrD(vAddrD), .matchD(matchD), .oddD(oddD),
+		.ASID(dataInHeader[`ASID]), .VPN2(dataInHeader[`VPN2]), .probeMatch(probeMatch),
+		.G(dataInHeader[`G]), .pageMask(dataInHeader[`PageMask]));
+	
 	assign regIndexOut[31] = ~|probeMatch;
 	assign regIndexOut[30:5] = 0;
+	Encoder32 regIndexEncoder(.I(probeMatch), .O(regIndexOut[4:0]));
+	Encoder32 entryIndexIEncoder(.I(matchI), .O(entryIndexI[4:0]));
+	Encoder32 entryIndexDEncoder(.I(matchD), .O(entryIndexD[4:0]));
+	assign entryIndexI[5] = |oddI;
+	assign entryIndexD[5] = |oddD;
 	
-	TLBHeaderInst headers(.clk(clk), .rst(rst),
-		.vAddrI(vAddrI), .matchI(matchI), .entryIndexI(entryIndexI), .pageMaskI(),
-		.vAddrD(vAddrD), .matchD(matchD), .entryIndexD(entryIndexD), .pageMaskD(),
-		.ASID(dataInHeader[`ASID]), .VPN2(dataInHeader[`VPN2]), .probeMatch(probeMatch), .probeIndex(probeIndex),
-		.dataInHeader(dataInHeader),
-		.indexInHeader(indexInHeader), .regWired(regWired), .indexMatch(indexMatch),
-		.shift(shift), .regRandom(regRandom));
+//module TLBRNG(
+//		input clk, input rst, input next,
+//		input [4:0] regWired, output reg [4:0] regRandom = 5'd31
+//	);
+	TLBRNG randomGen(.clk(clk), .rst(regWiredWrite), .next(op == 2'b11),
+		.regWired(regWired), .regRandom(regRandom));
 	
 	assign dupMatch = 1'b0;//TODO
 	
 	assign pageMaskI_out = unmapI? 16'hffff: pageMaskI;
 	
+endmodule
+
+module Encoder32(
+	input [31:0] I, output [4:0] O
+);
+	assign O[4] = |I[31:16];
+	assign O[3] = |{I[31:24], I[15:8]};
+	assign O[2] = |{I[31:28], I[23:20], I[15:12], I[7:4]};
+	assign O[1] = |{I[31:30], I[27:26], I[23:22], I[19:18], I[15:14], I[11:10], I[7:6], I[3:2]};
+	assign O[0] = |{I[31], I[29], I[27], I[25], I[23], I[21], I[19], I[17],
+					I[15], I[13], I[11], I[ 9], I[ 7], I[ 5], I[ 3], I[ 1]};
+
 endmodule

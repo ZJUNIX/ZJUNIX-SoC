@@ -18,7 +18,10 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-module CPUCacheTop(
+module CPUCacheTop #(
+	parameter CLKCPU_PERIOD = 10,
+	parameter CLKDDR_PERIOD = 5
+) (
 	input clkCPU, input clkDDR, input rst, input [4:0] interrupt,
 	//IBus signals
 	output [31:0] addrIBus, input [31:0] dinIBus,
@@ -56,16 +59,10 @@ module CPUCacheTop(
 	wire [31:0] dbg_dcacheWay0, dbg_dcacheWay1;
 	
 	PCPU cpu(.clk(clkCPU), .rst(rst), .iStall(iStall), .dStall(dStall),
-//		.iBusAddr(addrIBus), .iBusAddrMapped(addrIBusMapped),
-//		.instReq(instStb), .IOAddrI(ioAddrI), .instIn(cpuInstIn),
 		.addrIBus(addrIBus), .stbIBus(stbIBus),
 		.addrIBusMapped(addrIBusMapped), .stbIBusMapped(iCacheStb),
 		.mappedIBus(mappedIBus), .instIn(cpuInstIn),
 		
-//		.dBusAddr(addrDBus), .dBusAddrMapped(addrDBusMapped),
-//		.memReq(memStb), .IOAddrD(ioAddrD), .dataOut(doutDBus),
-//		.dataMask(dmDBus), .memWE(weDBus), .dataIn(cpuDataIn),
-
 		.addrDBus(addrDBus), .stbDBus(stbDBus),
 		.addrDBusMapped(addrDBusMapped), .stbDBusMapped(dCacheStb),
 		.mappedDBus(mappedDBus), .dataOut(doutDBus),
@@ -100,7 +97,8 @@ module CPUCacheTop(
 	wire ws_we_m0, ws_we_m1;
 	wire ws_ack_m0, ws_ack_m1;
 
-	ICache icache(.clkCPU(clkCPU), .clkDDR(clkDDR), .rst(rst),
+	ICache #(.CLKCPU_PERIOD(CLKCPU_PERIOD), .CLKDDR_PERIOD(CLKDDR_PERIOD))
+		icache(.clkCPU(clkCPU), .clkDDR(clkDDR), .rst(rst),
 		.PCIn(addrIBusMapped), .req(iCacheStb), .instOut(iCacheOut), .iStall(iCacheStall),
 		.invalidateAddr(addrDBusMapped), .invalidateReq(iCacheOp),
 		.ws_addr(ws_addr_m0), .ws_din(ws_din_m0), .ws_cyc(ws_cyc_m0),
@@ -109,7 +107,8 @@ module CPUCacheTop(
 	assign ws_dm_m0 = 16'h0;
 	assign ws_we_m0 = 1'b0;
 	
-	DCache dcache(.clkCPU(clkCPU), .clkDDR(clkDDR), .rst(rst),
+	DCache #(.CLKCPU_PERIOD(CLKCPU_PERIOD), .CLKDDR_PERIOD(CLKDDR_PERIOD))
+		dcache(.clkCPU(clkCPU), .clkDDR(clkDDR), .rst(rst),
 		.addrIn(addrDBusMapped), .req(dCacheStb), .dataIn(doutDBus),
 		.dm(dmDBus), .we(weDBus), .dataOut(dCacheOut), .dStall(dCacheStall),
 		.invalidate(dCacheOp),
