@@ -115,12 +115,14 @@ module PipeReg #(
 		assign o = i;
 	else if(DEPTH == 1)
 	begin
+		(* SHREG_EXTRACT = "NO" *)
 		reg o_reg;
 		always @ (posedge clk) o_reg <= i;
 		assign o = o_reg;
 	end
 	else
 	begin
+		(* SHREG_EXTRACT = "NO" *)
 		reg [DEPTH-1:0] o_reg;
 		always @ (posedge clk) o_reg <= {i, o_reg[DEPTH-1:1]};
 		assign o = o_reg[0];

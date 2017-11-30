@@ -22,7 +22,7 @@ module DCache #(
 	parameter CLKCPU_PERIOD = 10,
 	parameter CLKDDR_PERIOD = 5
 ) (
-	input clkCPU, input clkDDR, input rst,
+	input clkCPU, input clkDDR, input rstCPU, input rstDDR,
 	//Interface to CPU, synchronous to clkCPU
 	input [31:0] addrIn, input req, input [31:0] dataIn,
 	input [3:0] dm, input we, output [31:0] dataOut, output dStall, input invalidate,
@@ -59,7 +59,7 @@ module DCache #(
 		.addrb(addrb), .clkb(clkDDR), .dinb(dinb), .op(dataOp), .doutb(doutb1),
 		.enb(1'b1), .web(web & waySelB), .dirtyb(dirtyb1));
 	
-	DCacheFSM_CPU FSM0(.clk(clkCPU), .rst(rst),
+	DCacheFSM_CPU FSM0(.clk(clkCPU), .rst(rstCPU),
 		.addrIn(addrIn), .req(req), .write(we),
 		.dataOut(dataOut), .stall(dStall), .invalidateReq(invalidate),
 		.writeReject(writeReject), .douta0(douta0), .douta1(douta1),
@@ -67,7 +67,7 @@ module DCache #(
 		.completeStb(completeStb_CPU), .replaceIndex(replaceIndex_CPU),
 		.oldTag(oldTag_CPU), .newTag(newTag_CPU));
 	
-	DCacheFSM_DDR FSM1(.clk(clkDDR), .rst(rst),
+	DCacheFSM_DDR FSM1(.clk(clkDDR), .rst(rstDDR),
 		.ws_addr(ws_addr), .ws_dout(ws_dout), .ws_dm(ws_dm),
 		.ws_din(ws_din), .ws_cyc(ws_cyc), .ws_stb(ws_stb), .ws_we(ws_we), .ws_ack(ws_ack),
 		.addrb(addrb), .dinb(dinb), .dataOp(dataOp), .doutb(waySelB? doutb1: doutb0),

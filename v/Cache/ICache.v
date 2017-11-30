@@ -22,7 +22,7 @@ module ICache #(
 	parameter CLKCPU_PERIOD = 10,
 	parameter CLKDDR_PERIOD = 5
 ) (
-	input clkCPU, input clkDDR, input rst,
+	input clkCPU, input clkDDR, input rstCPU, input rstDDR,
 	//Interface to CPU, synchronous to clkCPU
 	input [31:0] PCIn, input req, output [31:0] instOut, output iStall,
 	input [31:0] invalidateAddr, input invalidateReq,
@@ -45,10 +45,10 @@ module ICache #(
 	ICacheData way1Data(.addra(PCIn[14:2]), .clka(~clkCPU), .douta(douta1), .ena(1'b1),
 		.addrb(addrb), .clkb(clkDDR), .dinb(dinb), .enb(1'b1), .web(web[1]));
 	
-	ICacheFSM_CPU FSM0(.clk(clkCPU), .rst(rst), .addrIn(PCIn), .req(req), .dataOut(instOut), .stall(iStall),
+	ICacheFSM_CPU FSM0(.clk(clkCPU), .rst(rstCPU), .addrIn(PCIn), .req(req), .dataOut(instOut), .stall(iStall),
 		.invalidateAddr(invalidateAddr), .invalidateReq(invalidateReq), .douta0(douta0), .douta1(douta1),
 		.replaceStb(replaceStb_CPU), .replaceBlock(replaceBlock_CPU), .completeStb(completeStb_CPU));
-	ICacheFSM_DDR FSM1(.clk(clkDDR), .rst(rst), .addrb(addrb), .dinb(dinb), .web(web),
+	ICacheFSM_DDR FSM1(.clk(clkDDR), .rst(rstDDR), .addrb(addrb), .dinb(dinb), .web(web),
 		.replaceStb(replaceStb_DDR), .replaceBlock(replaceBlock_DDR), .completeStb(completeStb_DDR),
 		.ws_addr(ws_addr), .ws_din(ws_din), .ws_cyc(ws_cyc), .ws_stb(ws_stb), .ws_ack(ws_ack));
 	

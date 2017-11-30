@@ -37,6 +37,7 @@ module CPUCacheTop #(
 	output [31:0] dbg_IDPC, output [31:0] dbg_EXPC, output [31:0] dbg_MEMPC
 );
 
+	wire rstCPU, rstDDR;
 	
 	wire iStall, dStall;
 	wire iCacheStall, dCacheStall;
@@ -49,7 +50,6 @@ module CPUCacheTop #(
 //	reg weDBus_reg;
 //	reg dCacheOp_reg;
 	
-	
 	wire [31:0] cpuInstIn, cpuDataIn;
 	wire [31:0] iCacheOut, dCacheOut;
 	wire [31:0] addrIBusMapped, addrDBusMapped;
@@ -58,7 +58,7 @@ module CPUCacheTop #(
 	
 	wire [31:0] dbg_dcacheWay0, dbg_dcacheWay1;
 	
-	PCPU cpu(.clk(clkCPU), .rst(rst), .iStall(iStall), .dStall(dStall),
+	PCPU cpu(.clk(clkCPU), .rst(rstCPU), .iStall(iStall), .dStall(dStall),
 		.addrIBus(addrIBus), .stbIBus(stbIBus),
 		.addrIBusMapped(addrIBusMapped), .stbIBusMapped(iCacheStb),
 		.mappedIBus(mappedIBus), .instIn(cpuInstIn),
@@ -98,7 +98,7 @@ module CPUCacheTop #(
 	wire ws_ack_m0, ws_ack_m1;
 
 	ICache #(.CLKCPU_PERIOD(CLKCPU_PERIOD), .CLKDDR_PERIOD(CLKDDR_PERIOD))
-		icache(.clkCPU(clkCPU), .clkDDR(clkDDR), .rst(rst),
+		icache(.clkCPU(clkCPU), .clkDDR(clkDDR), .rstCPU(rstCPU), .rstDDR(rstDDR),
 		.PCIn(addrIBusMapped), .req(iCacheStb), .instOut(iCacheOut), .iStall(iCacheStall),
 		.invalidateAddr(addrDBusMapped), .invalidateReq(iCacheOp),
 		.ws_addr(ws_addr_m0), .ws_din(ws_din_m0), .ws_cyc(ws_cyc_m0),
@@ -108,7 +108,7 @@ module CPUCacheTop #(
 	assign ws_we_m0 = 1'b0;
 	
 	DCache #(.CLKCPU_PERIOD(CLKCPU_PERIOD), .CLKDDR_PERIOD(CLKDDR_PERIOD))
-		dcache(.clkCPU(clkCPU), .clkDDR(clkDDR), .rst(rst),
+		dcache(.clkCPU(clkCPU), .clkDDR(clkDDR), .rstCPU(rstCPU), .rstDDR(rstDDR),
 		.addrIn(addrDBusMapped), .req(dCacheStb), .dataIn(doutDBus),
 		.dm(dmDBus), .we(weDBus), .dataOut(dCacheOut), .dStall(dCacheStall),
 		.invalidate(dCacheOp),
@@ -122,7 +122,7 @@ module CPUCacheTop #(
 	reg wsMaster = 1'b0;
 	always @ (posedge clkDDR)
 	begin
-		if(rst)
+		if(rstDDR)
 			wsMaster <= 1'b0;
 		else if(~cycDDR)
 			wsMaster <= ~wsMaster;
@@ -138,6 +138,9 @@ module CPUCacheTop #(
 	assign ws_ack_m0 = ackDDR & ~wsMaster;
 	assign ws_ack_m1 = ackDDR &  wsMaster;
 
+	PipeReg #(2) rstCPU_sync(.clk(clkCPU), .i(rst), .o(rstCPU));
+	PipeReg #(2) rstDDR_sync(.clk(clkDDR), .i(rst), .o(rstDDR));
+	
 //	dbgModule dbg(.clk(clkCPU),
 //		.probe0(addrIBus), .probe1(cpuInstIn),
 //		.probe2(addrDBus), .probe3(cpuDataIn), .probe4(doutDBus),

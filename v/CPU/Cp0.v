@@ -90,7 +90,7 @@ module Cp0(
 	reg tlbp, tlbr;
 	
 	reg excAccept_reg;
-	reg statusEXL_reg;//used to control EPC load
+	reg [1:0] statusEXL_reg;//used to control EPC load
 	
 `define BEV 22
 `define IM 15:8
@@ -180,7 +180,7 @@ module Cp0(
 	assign regBadVAddrDin = badVAddrIn;
 	assign regBadVAddrWe = {32{writeBadVAddr}};
 	assign regEPCDin = regEPCIn;
-	assign regEPCWe = {32{excAccept_reg & ~statusEXL_reg}};
+	assign regEPCWe = {32{excAccept_reg & ~statusEXL_reg[1]}};
 	
 	
 	//Interrupt generate logic
@@ -238,7 +238,7 @@ module Cp0(
 	assign regIndexOut = regIndex;
 	assign regWiredOut = regWired[4:0];
 	
-	assign regCauseWe[`BD] = excAccept & ~regCause[`EXL];
+	assign regCauseWe[`BD] = excAccept_reg & ~statusEXL_reg[1];
 	assign regCauseDin[`BD] = bdIn;
 	assign regStatusWe[`EXL] = (eret & ~regStatus[`ERL]) | excAccept;
 	assign regStatusDin[`EXL] = excAccept;
@@ -270,7 +270,7 @@ module Cp0(
 			dataIn_reg <= 32'h0;
 			excAccept_reg <= 1'b0;
 			dataOut <= 32'h0;
-			statusEXL_reg <= 1'b0;
+			statusEXL_reg <= 2'b00;
 		end
 		else if(~stall)
 		begin
@@ -328,7 +328,8 @@ module Cp0(
 			8'b11110_000: dataOut <= regErrorEPC;
 			default: dataOut <= 32'h0;
 			endcase
-			statusEXL_reg <= regStatus[`EXL];
+			statusEXL_reg[0] <= regStatus[`EXL];
+			statusEXL_reg[1] <= statusEXL_reg[0] & regStatus[`EXL];
 		end
 		
 		if(rst | EX_flush)
