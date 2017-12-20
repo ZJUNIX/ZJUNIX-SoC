@@ -167,8 +167,9 @@ sdInit_err:
 	lb	$t1, 0($t1)
 	lb	$t2, 0($t2)
 	sb	$t1, 24($a0)
-	jal	puts
 	sb	$t2, 25($a0)
+	jal	puts
+	nop
 	
 	la	$a0, sdInitCmdErrMsg
 	la	$t0, sdInitCmdErrMsgIndex
@@ -186,10 +187,12 @@ sdInit_err1:
 	la	$a0, sdInitCMD8ErrMsg
 	jal	puts
 	nop
-	jal	putHex
 	lw	$a0, 0x108($gp)
+	jal	putHex
+	nop
+	li	$a0, 10
 	jal	putchar
-	ori	$a0, $zero, 10
+	nop
 	
 	b	sdInit_ret
 	li	$v0, 1
@@ -201,11 +204,12 @@ sdInit_err2:
 	li	$v0, 1
 	
 sdInit_ret:
-	lw	$ra, 0x8($sp)
 	lw	$s0, 0x0($sp)
 	lw	$gp, 0x4($sp)
-	j	$ra
+	lw	$ra, 0x8($sp)
 	addu	$sp, $sp, 12
+	j	$ra
+	nop
 	
 sd_sendCmd:#a0=cmd, a1=arg, a2=err return addr
 	sw	$zero, 0x134($gp)#Clear flags
@@ -289,12 +293,13 @@ sd_readSector_err1:
 	nop
 	
 sd_readSector_ret:
-	lw	$ra, 0xc($sp)
 	lw	$s0, 0x0($sp)
 	lw	$s1, 0x4($sp)
 	lw	$gp, 0x8($sp)
-	j	$ra
+	lw	$ra, 0xc($sp)
 	addu	$sp, $sp, 16
+	j	$ra
+	nop
 
 #sd_readSector_debug:
 #	.asciiz	"Read sector "

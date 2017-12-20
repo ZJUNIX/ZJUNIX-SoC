@@ -361,18 +361,21 @@ puts:
 	move	$s0, $a0
 puts_loop:
 	lbu	$t0, 0($s0)
-	beq	$t0, $zero, puts_ret
 	addu	$s0, $s0, 1
-	jal	putchar
+	beq	$t0, $zero, puts_ret
+	nop
 	move	$a0, $t0
+	jal	putchar
+	nop
 	j	puts_loop
 	nop
 	
 puts_ret:
-	lw	$ra, 4($sp)
 	lw	$s0, 0($sp)
-	j	$ra
+	lw	$ra, 4($sp)
 	addu	$sp, $sp, 8
+	j	$ra
+	nop
 
 putHex:
 	addu	$sp, $sp, -16
@@ -393,12 +396,13 @@ putHex_loop:
 	bne	$s1, $zero, putHex_loop
 	nop
 	
-	lw	$ra, 0xc($sp)
 	lw	$s0, 0x0($sp)
 	lw	$s1, 0x4($sp)
 	lw	$s2, 0x8($sp)
-	j	$ra
+	lw	$ra, 0xc($sp)
 	addu	$sp, $sp, 16
+	j	$ra
+	nop
 	
 fillScreen:
 	li	$t0, 0xbfc04000
