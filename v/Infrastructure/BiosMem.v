@@ -32,8 +32,9 @@ module BiosMem(
 	wire [3:0] _web;
 	wire [11:0] _addrb;
 	wire [31:0] _dinb;
-	wire [7:0] uartData;
-	wire uartReady;
+	
+	wire [7:0] uartData, progData;
+	wire uartValid, progValid;
 	
 	always @ (posedge clka)
 	if(ena)
@@ -58,9 +59,17 @@ module BiosMem(
 	initial
 		$readmemh("../../coe/bootstrap.hex", data);
 
-	UART_R U0(.clk(clkProg), .Rx(uartRx), .dout(uartData), .ready(uartReady), .busy());
+	UART_RX #(.COUNTER_MSB(9)) U0(.clk(clkProg), .halfPeriod(9'd433), .RX(uartRx),
+		.m_data(uartData), .m_valid(uartValid));
+		
+	AxisFifo #(.WIDTH(8), .DEPTH_BITS(5), .SYNC_STAGE_I(0), .SYNC_STAGE_O(1))
+		cdcFifo ( .rst(1'b0),
+		.s_clk(clkProg), .s_valid(uartValid), .s_ready(),     .s_data(uartData), .s_load(),
+		.m_clk(clkb),    .m_valid(progValid), .m_ready(1'b1), .m_data(progData), .m_load()
+	);
+	
 	ReprogInterface #(.ADDR_WIDTH(12)) U1(.clkMem(clkb),
-		.progData(uartData), .progClk(uartReady), .progEn(progEN),
+		.progData(progData), .progValid(progValid), .progEn(progEN),
 		.addrIn(addrb), .dataIn(dinb), .weIn(web), .enIn(enb),
 		.addrOut(_addrb), .dataOut(_dinb), .weOut(_web), .enOut(_enb));
 

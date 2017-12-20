@@ -180,9 +180,9 @@ module AsyncHandshake #(
 
 	generate if(STB_FREQ < ACK_FREQ)
 	begin: FREQ_UP
-		Handshake_freqUp(clkStb, clkAck, stbI, stbO, ackI, ackO);
+		Handshake_freqUp up(clkStb, clkAck, stbI, stbO, ackI, ackO);
 	end else begin: FREQ_DOWN
-		Handshake_freqDown(clkStb, clkAck, stbI, stbO, ackI, ackO);
+		Handshake_freqDown down(clkStb, clkAck, stbI, stbO, ackI, ackO);
 	end endgenerate
 
 endmodule

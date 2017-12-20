@@ -18,108 +18,84 @@
 // Additional Comments: 
 //
 //////////////////////////////////////////////////////////////////////////////////
-module UART_R(
-	input clk, input Rx,
-	output reg [7:0] dout, output reg ready, output reg busy
+module UART_TX #(
+	parameter COUNTER_MSB = 9
+)(
+	input clk, input [COUNTER_MSB:0] period,
+	input s_valid, input [7:0] s_data, output reg s_ready = 1'b1,
+	output TX
 );
-
-parameter HALF_PERIOD = 434;//baud rate 115200 under 100MHz clock
-parameter COUNTER_MSB = 9;
-
-	reg [COUNTER_MSB:0] counter = 0;
-	reg [8:0] shift = 9'h0;
-
-	always @ (posedge clk)
-	begin
-		if(busy)
-		begin
-			if(counter == HALF_PERIOD * 2 - 1)
-			begin
-				counter <= 0;
-				if(shift[0])
-				begin
-					dout <= shift[8:1];
-					ready <= 1'b1;
-					shift <= 8'h0;
-					busy <= 1'b0;
-				end
-				else
-					shift <= {Rx, shift[8:1]};
-			end
-			else
-				counter <= counter + 1'b1;
-		end
-		else
-		begin
-			if(counter == HALF_PERIOD - 1)
-			begin
-				busy <= 1'b1;
-				shift <= 9'b100000000;
-				counter <= 0;
-				ready <= 1'b0;
-			end
-			else
-			begin
-				if(Rx)
-					counter <= 0;
-				else
-					counter <= counter + 1'b1;
-			end
-		end
-	end
-
-endmodule
-
-module UART_T(
-	input clk, output Tx,
-	input [7:0] din, input ready, output reg ack, output reg busy
-);
-
-parameter PERIOD = 868;
-parameter COUNTER_MSB = 9;
-
 	reg [COUNTER_MSB:0] counter = 0;
 	reg [9:0] shift;
-	
-	assign Tx = busy? shift[0]: 1'bz;
 
 	always @ (posedge clk)
+	if(s_ready)
 	begin
-		if(busy)
+		if(s_valid)
 		begin
-			if(counter == PERIOD - 1)
+			s_ready <= 1'b0;
+			shift <= {1'b1, s_data, 1'b0};
+		end
+	end
+	else
+	begin
+		if(counter == period)
+			counter <= 0;
+		else
+			counter <= counter + 1'b1;
+		if(counter == period)
+		begin
+			shift <= {1'b0, shift[9:1]};
+			if(shift == 10'b0000000001) s_ready <= 1'b1;
+		end
+	end
+	assign TX = s_ready? 1'b1: shift[0];
+	
+endmodule
+
+module UART_RX #(
+	parameter COUNTER_MSB = 9
+) (
+	input clk, input [COUNTER_MSB-1:0] halfPeriod,
+	output reg m_valid, output reg [7:0] m_data,
+	input RX
+);
+	reg [COUNTER_MSB:0] counter = 0;
+	reg [8:0] shift = 9'h0;
+	reg inRX = 1'b0;
+	
+	always @ (posedge clk)
+	if(inRX)
+	begin
+		if(counter == {halfPeriod, 1'b1})
+			counter <= 0;
+		else
+			counter <= counter + 1'b1;
+		
+		if(counter == {halfPeriod, 1'b1})
+		begin
+			m_valid <= shift[0] & RX;//Check stop bit
+			if(shift[0])
 			begin
-				counter <= 0;
-				if(shift == 10'b0000000001)
-				begin
-					if(ready)
-					begin
-						shift <= {1'b1, din, 1'b0};
-						ack <= 1'b1;
-					end
-					else
-						busy <= 1'b0;
-				end
-				else
-				begin
-					shift <= {1'b0, shift[9:1]};
-					ack <= 1'b0;
-				end
+				m_data <= shift[8:1];
+				shift <= 8'h0;
+				inRX <= 1'b0;
 			end
 			else
-				counter <= counter + 1'b1;
+				shift <= {RX, shift[8:1]};
 		end
+	end
+	else
+	begin
+		m_valid <= 1'b0;
+		shift <= 9'b100000000;
+		inRX <= (counter == {1'b0, halfPeriod});
+		if(counter == {1'b0, halfPeriod})
+			counter <= 0;
+		else if(RX)
+			counter <= 0;
 		else
-		begin
-			if(ready)
-			begin
-				shift <= {1'b1, din, 1'b0};
-				busy <= 1'b1;
-				ack <= 1'b1;
-				counter <= 0;
-			end
-		end
-		
+			counter <= counter + 1'b1;
 	end
 
 endmodule

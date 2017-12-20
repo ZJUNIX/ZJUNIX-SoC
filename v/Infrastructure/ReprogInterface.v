@@ -20,10 +20,9 @@
 //////////////////////////////////////////////////////////////////////////////////
 module ReprogInterface #(
 	parameter ADDR_WIDTH = 10
-)	(
-	input clkMem,
+)(
+	input clkMem, input [7:0] progData, input progValid, input progEn,
 	input [ADDR_WIDTH-1:0] addrIn, input [31:0] dataIn, input [3:0] weIn, input enIn,
-	input [7:0] progData, input progClk, input progEn,
 	output [ADDR_WIDTH-1:0] addrOut, output [31:0] dataOut, output [3:0] weOut, output enOut
 );
 	
@@ -31,7 +30,6 @@ module ReprogInterface #(
 	reg [31:0] data_internal;
 	reg we_internal;
 	reg [1:0] byteCnt;
-	reg [1:0] prevClk;
 	
 	assign addrOut = we_internal? addr_internal: addrIn;
 	assign dataOut = we_internal? data_internal: dataIn;
@@ -40,10 +38,9 @@ module ReprogInterface #(
 	
 	always @ (posedge clkMem)
 	begin
-		prevClk <= {prevClk[0], progClk};
 		if(progEn)
 		begin
-			if(~prevClk[1] & prevClk[0])
+			if(progValid)
 			begin
 				if(byteCnt == 2'b11)
 				begin
