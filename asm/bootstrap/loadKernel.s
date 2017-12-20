@@ -147,16 +147,15 @@ loadKernel_loop1_start:
 	
 	move	$v0, $zero
 loadKernel_exit:
+	lw	$ra, 0x18($sp)
 	lw	$s0, 0x0($sp)
 	lw	$s1, 0x4($sp)
 	lw	$s2, 0x8($sp)
 	lw	$s3, 0xc($sp)
 	lw	$s4, 0x10($sp)
 	lw	$gp, 0x14($sp)
-	lw	$ra, 0x18($sp)
-	addu	$sp, $sp, 28
 	j	$ra
-	nop
+	addu	$sp, $sp, 28
 	
 readCluster:
 #id=firstCluster+(id<<3)
@@ -193,12 +192,11 @@ readCluster:
 	jal	readSector
 	addu	$a1, $s1, 7
 	
+	lw	$ra, 0x8($sp)
 	lw	$s0, 0x0($sp)
 	lw	$s1, 0x4($sp)
-	lw	$ra, 0x8($sp)
-	addu	$sp, $sp, 12
 	j	$ra
-	nop
+	addu	$sp, $sp, 12
 
 writebackCluster:#a0=starting address of cluster
 	move	$t0, $a0
