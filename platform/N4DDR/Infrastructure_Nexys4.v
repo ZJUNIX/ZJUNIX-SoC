@@ -103,10 +103,23 @@ module Infrastructure_Nexys4 #(
 	generate
 	if(PS2)
 	begin: PS2_DEFINED
-		PS2Wrapper ps2(.clk(clkCPU), .clkdiv3(clkdiv[3]), .rst(globlRst),
+		wire ps2ClkOut, ps2DatOut;
+		(* IOB = "true" *)
+		reg ps2ClkIn, ps2DatIn, ps2ClkOut_reg, ps2DatOut_reg;
+		PS2Wrapper ps2(.clkBus(clkCPU), .clkDevice(clk_100M), .rst(globlRst),
 			.din(dataInBus), .we(weBus), .en(en & (addrBus[7:3] == 5'b00010)), .sel(addrBus[2]),
 			.datRegOut(ps2DatReg), .ctrlRegOut(ps2CtrlReg), .interrupt(ps2Int),
-			.ps2Clk(ps2Clk), .ps2Dat(ps2Dat));
+			.ps2ClkIn(ps2ClkIn), .ps2DatIn(ps2DatIn), .ps2ClkOut(ps2ClkOut), .ps2DatOut(ps2DatOut));
+		
+		always @ (posedge clk_100M)
+		begin
+			ps2ClkIn <= ps2Clk;
+			ps2DatIn <= ps2Dat;
+			ps2ClkOut_reg <= ~ps2ClkOut;
+			ps2DatOut_reg <= ~ps2DatOut;
+		end
+		assign ps2Clk = ps2ClkOut_reg? 1'b0: 1'bz;
+		assign ps2Dat = ps2DatOut_reg? 1'b0: 1'bz;
 	end
 	else
 	begin: PS2_UNDEFINED
@@ -183,7 +196,6 @@ module Infrastructure_Nexys4 #(
 			3'h7: seg_dbgData <= dbg_dat7;
 			endcase
 		end
-//		assign clkCPU = switch[12]? (button == 6'b100000): clkCPU_internal;
 		assign segData = seg_dbgData;
 		assign ledData = |switch[15:13]? dbg_flags: led_internal;
 	end

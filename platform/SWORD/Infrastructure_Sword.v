@@ -119,10 +119,10 @@ module Infrastructure_Sword #(
 	generate
 	if(PS2)
 	begin: PS2_DEFINED
-		PS2Wrapper ps2(.clk(clkCPU), .clkdiv3(clkdiv[3]), .rst(globlRst),
+		PS2Wrapper #(.PARITY("NONE")) ps2(.clkBus(clkCPU), .clkDevice(clk_100M), .rst(globlRst),
 			.din(dataInBus), .we(weBus), .en(en & (addrBus[7:3] == 5'b00010)), .sel(addrBus[2]),
 			.datRegOut(ps2DatReg), .ctrlRegOut(ps2CtrlReg), .interrupt(ps2Int),
-			.ps2Clk(ps2Clk), .ps2Dat(ps2Dat));
+			.ps2ClkIn(ps2Clk), .ps2DatIn(ps2Dat), .ps2ClkOut(), .ps2DatOut());
 	end
 	else
 	begin: PS2_UNDEFINED

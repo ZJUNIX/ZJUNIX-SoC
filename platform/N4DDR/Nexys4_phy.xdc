@@ -19,8 +19,8 @@ resize_pblock [get_pblocks pblock_cache] -add {RAMB36_X1Y10:RAMB36_X3Y29}
 #resize_pblock [get_pblocks pblock_CPU] -add {RAMB18_X0Y0:RAMB18_X0Y19}
 #resize_pblock [get_pblocks pblock_CPU] -add {RAMB36_X0Y0:RAMB36_X0Y9}
 
-set_false_path -from [get_clocks -of_objects [get_pins infrastructure/C0/inst/mmcm_adv_inst/CLKOUT3]] -to [get_clocks -of_objects [get_pins infrastructure/C0/inst/mmcm_adv_inst/CLKOUT0]]
-set_false_path -from [get_clocks -of_objects [get_pins infrastructure/C0/inst/mmcm_adv_inst/CLKOUT0]] -to [get_clocks -of_objects [get_pins infrastructure/C0/inst/mmcm_adv_inst/CLKOUT3]]
+set_false_path -from [get_clocks -of_objects [get_nets infrastructure/clkCPU]] -to [get_clocks -of_objects [get_nets infrastructure/clkUART]]
+set_false_path -from [get_clocks -of_objects [get_nets infrastructure/clkUART]] -to [get_clocks -of_objects [get_nets infrastructure/clkCPU]]
 
 set_operating_conditions -airflow 0
 set_operating_conditions -board_layers 4to7
