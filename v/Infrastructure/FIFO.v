@@ -6,10 +6,9 @@ module AxisFifo #(
 	parameter SYNC_STAGE_I = 0,
 	parameter SYNC_STAGE_O = 1
 ) (
-	input rst,
-	input s_clk, input s_valid, output s_ready,
+	input s_clk, input s_rst, input s_valid, output s_ready,
 	input [WIDTH-1:0] s_data, output [DEPTH_BITS-1:0] s_load,
-	input m_clk, output m_valid, input m_ready,
+	input m_clk, input m_rst, output m_valid, input m_ready,
 	output reg [WIDTH-1:0] m_data, output [DEPTH_BITS-1:0] m_load
 );
 	localparam DEPTH = 1 << DEPTH_BITS;
@@ -19,21 +18,22 @@ module AxisFifo #(
 	reg [DEPTH_BITS-1:0] wrPtr = 0;
 	wire [DEPTH_BITS-1:0] rdPtrSync;
 	always @ (posedge s_clk)
-	if(rst)
+	if(s_rst)
 		wrPtr <= {DEPTH_BITS{1'b0}};
 	else if(s_valid & s_ready)
 	begin
 		wrPtr <= wrPtr + 1'b1;
 		data[wrPtr] <= s_data;
 	end
-	assign s_ready = (wrPtr + 1) != rdPtrSync;
+	wire [DEPTH_BITS-1:0] wrPtr_add1 = wrPtr + 1;
+	assign s_ready = wrPtr_add1 != rdPtrSync;
 	assign s_load = wrPtr - rdPtrSync;
 	
 	//m_clk(read) domain logic
 	reg [DEPTH_BITS-1:0] rdPtr = 0;
 	wire [DEPTH_BITS-1:0] wrPtrSync;
 	always @ (posedge m_clk)
-	if(rst)
+	if(m_rst)
 		rdPtr = {DEPTH_BITS{1'b0}};
 	else
 	begin

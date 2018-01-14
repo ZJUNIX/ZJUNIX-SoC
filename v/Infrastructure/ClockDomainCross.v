@@ -131,6 +131,27 @@ module PipeReg #(
 	
 endmodule
 
+module PipeReg_rst #(
+	parameter LEN = 3,
+	parameter INIT = 1'b0
+) (
+	input clk, input rst,
+	input i, output o
+);
+	
+	(* shreg_extract = "no", ASYNC_REG = "TRUE" *)
+	reg [LEN-1:0] sync = {LEN{INIT}};
+	
+	always @ (posedge clk or posedge rst)
+	if(rst)
+		sync <= {LEN{INIT}};
+	else
+		sync <= {sync[LEN-2:0], i};
+	
+	assign o = sync[LEN-1];
+	
+endmodule
+
 module Handshake_freqUp( //clkAck has a higher frequency than clkStb
 	input clkStb, input clkAck,
 	input stbI, output reg stbO,
@@ -185,4 +206,22 @@ module AsyncHandshake #(
 		Handshake_freqDown down(clkStb, clkAck, stbI, stbO, ackI, ackO);
 	end endgenerate
 
+endmodule
+
+module EdgeDetector #(
+	parameter INIT = 1'b1
+)(
+	input clk, input rst,
+	input i, output rise, output fall
+);
+	reg [1:0] in_reg = {2{INIT}};
+	always @ (posedge clk)
+	if(rst)
+		in_reg <= {2{INIT}};
+	else
+		in_reg <= {in_reg[0], i};
+	
+	assign rise = (in_reg == 2'b01);
+	assign fall = (in_reg == 2'b10);
+	
 endmodule

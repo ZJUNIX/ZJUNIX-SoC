@@ -44,13 +44,13 @@ module PS2Wrapper #(
 	);
 	
 	AxisFifo #(.WIDTH(8), .DEPTH_BITS(FIFO_DEPTH), .SYNC_STAGE_I(0), .SYNC_STAGE_O(1))
-		txBuffer (.rst(rst), .s_load(ctrlRegOut[12:8]), .m_load(),
+		txBuffer (.s_rst(rst), .m_rst(rst), .s_load(ctrlRegOut[12:8]), .m_load(),
 		.s_clk(clkBus), .s_valid(we[0] & en & ~sel), .s_ready(), .s_data(din[7:0]),
 		.m_clk(clkDevice), .m_valid(txValid), .m_ready(txReady), .m_data(txData)
 	);
 	
 	AxisFifo #(.WIDTH(8), .DEPTH_BITS(FIFO_DEPTH), .SYNC_STAGE_I(0), .SYNC_STAGE_O(1))
-		rxBuffer (.rst(rst), .s_load(), .m_load(ctrlRegOut[4:0]),
+		rxBuffer (.s_rst(rst), .m_rst(rst), .s_load(), .m_load(ctrlRegOut[4:0]),
 		.s_clk(clkDevice), .s_valid(rxValid), .s_ready(), .s_data(rxData),
 		.m_clk(clkBus), .m_valid(rxReady), .m_ready(~|we & en & ~sel), .m_data(datRegOut)
 	);

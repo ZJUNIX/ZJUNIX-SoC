@@ -47,13 +47,13 @@ module UARTWrapper #(
 		.m_valid(uart_m_valid), .m_data(uart_m_data));
 
 	AxisFifo #(.WIDTH(8), .DEPTH_BITS(8), .SYNC_STAGE_I(1), .SYNC_STAGE_O(1))
-		txBuffer (.rst(rst), .s_load(ctrlRegOut[15:8]), .m_load(),
+		txBuffer (.s_rst(rst), .m_rst(rst), .s_load(ctrlRegOut[15:8]), .m_load(),
 		.s_clk(clk), .s_valid(we[0] & en & ~sel), .s_ready(), .s_data(din[7:0]),
 		.m_clk(clkUART), .m_valid(uart_s_valid), .m_ready(uart_s_ready), .m_data(uart_s_data)
 	);
 	
 	AxisFifo #(.WIDTH(8), .DEPTH_BITS(8), .SYNC_STAGE_I(1), .SYNC_STAGE_O(1))
-		rxBuffer (.rst(rst), .s_load(), .m_load(ctrlRegOut[7:0]),
+		rxBuffer (.s_rst(rst), .m_rst(rst), .s_load(), .m_load(ctrlRegOut[7:0]),
 		.s_clk(clkUART), .s_valid(uart_m_valid), .s_ready(), .s_data(uart_m_data),
 		.m_clk(clk), .m_valid(rxReady), .m_ready(~|we & en & ~sel), .m_data(datRegOut)
 	);

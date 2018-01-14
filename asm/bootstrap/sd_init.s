@@ -18,7 +18,7 @@ sdInit:
 	
 	li	$gp, 0xbfc09000
 	
-	li	$t0, 125
+	li	$t0, 249
 	sw	$t0, 0x124($gp)#Set SD clock rate to 400kHz
 	li	$t0, 511
 	sw	$t0, 0x144($gp)
@@ -29,7 +29,7 @@ sdInit:
 	sw	$t0, 0x118($gp)#Data timeout:100ms under 25MHz clock
 	
 	#Send CMD0
-	li	$a0, 0x4
+	li	$a0, 0x0
 	la	$a2, sdInit_err
 	move	$v0, $zero #v0 carries the current command index(BCD encoded) for error signaling
 	jal	sd_sendCmd
@@ -39,7 +39,7 @@ sdInit:
 	or	$a0, $zero, 4095
 
 	#Send CMD8, check response=0x1aa
-	or	$a0, $zero, 0x81d
+	or	$a0, $zero, 0x819
 	li	$v0, 0x8
 	jal	sd_sendCmd
 	or	$a1, $zero, 0x1aa
@@ -54,22 +54,22 @@ sdInit:
 
 	#Send ACMD41 for the first time, voltage window set to empty
 	#Note: CMD41 in ACMD41 should not check command index and CRC
-	or	$a0, $zero, 0x371d
+	or	$a0, $zero, 0x3719
 	li	$v0, 0x55
 	jal	sd_sendCmd
 	move	$a1, $zero
-	or	$a0, $zero, 0x2905
+	or	$a0, $zero, 0x2901
 	li	$v0, 0x41
 	jal	sd_sendCmd
 	lui	$a1, 0x4000
 
 	li	$s0, 200#Try 200 times at most
 sd_ACMD41:
-	or	$a0, $zero, 0x371d
+	or	$a0, $zero, 0x3719
 	li	$v0, 0x55
 	jal	sd_sendCmd
 	move	$a1, $zero
-	or	$a0, $zero, 0x2905
+	or	$a0, $zero, 0x2901
 	li	$v0, 0x41
 	jal	sd_sendCmd
 	lui	$a1, 0x4010
@@ -89,17 +89,17 @@ sd_ACMD41:
 sd_ACMD41_finish:
 	
 	#CMD2 followed by CMD3
-	or	$a0, $zero, 0x0207
+	or	$a0, $zero, 0x0202
 	li	$v0, 0x2
 	jal	sd_sendCmd
 	move	$a1, $zero
-	or	$a0, $zero, 0x031d
+	or	$a0, $zero, 0x0319
 	li	$v0, 0x3
 	jal	sd_sendCmd
 	move	$a1, $zero
 	
 	#Set SD clock rate to 25MHz
-	or	$t0, $zero, 1
+	or	$t0, $zero, 3
 	sw	$t0, 0x124($gp)
 	
 	jal	sleep
@@ -122,26 +122,26 @@ sd_ACMD41_finish:
 	
 	#ACMD42, disconnect pullup resistor on DAT3
 	li	$v1, 9
-	or	$a0, $zero, 0x371d
+	or	$a0, $zero, 0x3719
 	li	$v0, 0x55
 	jal	sd_sendCmd
 	move	$a1, $s0
 	
 	li	$v1, 10
 	li	$v0, 0x42
-	or	$a0, $zero, 0x2a1d
+	or	$a0, $zero, 0x2a19
 	jal	sd_sendCmd
 	move	$a1, $zero
 	
 	#ACMD6, set bus width to 4-bit
 	li	$v1, 11
-	or	$a0, $zero, 0x371d
+	or	$a0, $zero, 0x3719
 	li	$v0, 0x55
 	jal	sd_sendCmd
 	move	$a1, $s0
 	
 	li	$v1, 12
-	or	$a0, $zero, 0x061d
+	or	$a0, $zero, 0x0619
 	li	$v0, 0x6
 	jal	sd_sendCmd
 	or	$a1, $zero, 2

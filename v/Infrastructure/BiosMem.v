@@ -63,7 +63,7 @@ module BiosMem(
 		.m_data(uartData), .m_valid(uartValid));
 		
 	AxisFifo #(.WIDTH(8), .DEPTH_BITS(5), .SYNC_STAGE_I(0), .SYNC_STAGE_O(1))
-		cdcFifo ( .rst(1'b0),
+		cdcFifo ( .s_rst(0), .m_rst(0),
 		.s_clk(clkProg), .s_valid(uartValid), .s_ready(),     .s_data(uartData), .s_load(),
 		.m_clk(clkb),    .m_valid(progValid), .m_ready(1'b1), .m_data(progData), .m_load()
 	);

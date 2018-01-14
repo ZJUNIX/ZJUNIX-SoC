@@ -24,7 +24,7 @@ module SDWrapper(
 	//CPU bus interface
 	input [31:0] dataInBus, input [31:0] addrBus, input [3:0] weBus,
 	input en_ctrl, input en_data,
-	output [31:0] dataOut_ctrl, output [31:0] dataOut_data,
+	output reg [31:0] dataOut_ctrl, output [31:0] dataOut_data,
 	output sdInt,
 	
 	//SD interface
@@ -46,59 +46,43 @@ module SDWrapper(
 	wire ws_buf_ack;
 
 	//SD bus signals
-	wire [3:0] sd_dat_internal;
-	wire sd_cmd_internal;
-	wire sd_dat_oe, sd_cmd_oe;
-	assign sd_dat = sd_dat_oe? sd_dat_internal: 4'bzzzz;
-	assign sd_cmd = sd_cmd_oe? sd_cmd_internal: 1'bz;
-//	assign sd_rst = ~globlRst;
 	always @ (posedge clkSD)
 		if(~globlRst) sd_rst <= 1'b0;
+	wire [31:0] ctrlDataOut;
 	
 	//SD controller
-	sdc_controller sd(.wb_clk_i(clkCPU), .wb_rst_i(globlRst),
-		.wb_dat_i(dataInBus), .wb_dat_o(dataOut_ctrl), .wb_adr_i({addrBus[7:2], 2'b0}),
-		.wb_sel_i(weBus), .wb_we_i(|weBus), .wb_cyc_i(en_ctrl), .wb_stb_i(en_ctrl), .wb_ack_o(),
+//	sdc_controller sd(.wb_clk_i(clkCPU), .wb_rst_i(globlRst),
+//		.wb_dat_i(dataInBus), .wb_dat_o(dataOut_ctrl), .wb_adr_i({addrBus[7:2], 2'b0}),
+//		.wb_sel_i(weBus), .wb_we_i(|weBus), .wb_cyc_i(en_ctrl), .wb_stb_i(en_ctrl), .wb_ack_o(),
 		
-		.m_wb_dat_o(ws_buf_din), .m_wb_dat_i(ws_buf_dout),  .m_wb_adr_o(ws_buf_addr),
-		.m_wb_sel_o(ws_buf_dm), .m_wb_we_o(ws_buf_we), .m_wb_cyc_o(ws_buf_cyc), .m_wb_stb_o(ws_buf_stb),
-		.m_wb_ack_i(ws_buf_ack), .m_wb_cti_o(), .m_wb_bte_o(),
+//		.m_wb_dat_o(ws_buf_din), .m_wb_dat_i(ws_buf_dout),  .m_wb_adr_o(ws_buf_addr),
+//		.m_wb_sel_o(ws_buf_dm), .m_wb_we_o(ws_buf_we), .m_wb_cyc_o(ws_buf_cyc), .m_wb_stb_o(ws_buf_stb),
+//		.m_wb_ack_i(ws_buf_ack), .m_wb_cti_o(), .m_wb_bte_o(),
 		
-		.sd_dat_dat_i(sd_dat), .sd_dat_out_o(sd_dat_internal), .sd_dat_oe_o(sd_dat_oe),
-		.sd_cmd_dat_i(sd_cmd), .sd_cmd_out_o(sd_cmd_internal), .sd_cmd_oe_o(sd_cmd_oe),
-		.sd_clk_i_pad(clkSD), .sd_clk_o_pad(sd_clk_internal),
+//		.sd_dat_dat_i(sd_dat), .sd_dat_out_o(sd_dat_internal), .sd_dat_oe_o(sd_dat_oe),
+//		.sd_cmd_dat_i(sd_cmd), .sd_cmd_out_o(sd_cmd_internal), .sd_cmd_oe_o(sd_cmd_oe),
+//		.sd_clk_i_pad(clkSD), .sd_clk_o_pad(sd_clk_internal),
 		
-		.int_cmd(intCmd), .int_data(intDat));
-	
-	//Output clock forwarding using ODDR
-	ODDR #(
-		.DDR_CLK_EDGE("OPPOSITE_EDGE"), // "OPPOSITE_EDGE" or "SAME_EDGE" 
-		.INIT(1'b1),    // Initial value of Q: 1'b0 or 1'b1
-		.SRTYPE("ASYNC") // Set/Reset type: "SYNC" or "ASYNC" 
-	) sd_clk_fwd (
-		.Q(sd_clk),   // 1-bit DDR output
-		.C(sd_clk_internal),   // 1-bit clock input
-		.CE(1'b1), // 1-bit clock enable input
-		.D1(1'b0), // 1-bit data input (positive edge)
-		.D2(1'b1), // 1-bit data input (negative edge)
-		.R(1'b0),   // 1-bit reset
-		.S(globlRst)    // 1-bit set
+//		.int_cmd(intCmd), .int_data(intDat));
+	SDController sd(.wb_clk(clkCPU), .wb_rst(globlRst), .sd_clk(clkSD), .sd_rst(globlRst),
+		.wb_addr({addrBus[7:2], 2'b0}), .wb_din(dataInBus), .wb_dout(ctrlDataOut),
+		.wb_dm(weBus), .wb_cyc(en_ctrl), .wb_stb(en_ctrl), .wb_we(|weBus), .wb_ack(),
+		.wbm_addr(ws_buf_addr), .wbm_dout(ws_buf_din), .wbm_din(ws_buf_dout),
+		.wbm_dm(ws_buf_dm), .wbm_cyc(ws_buf_cyc), .wbm_stb(ws_buf_stb),
+		.wbm_we(ws_buf_we), .wbm_ack(ws_buf_ack),
+		.int_cmd(intCmd), .int_data(intDat),
+		.sd_dat_pad(sd_dat), .sd_cmd_pad(sd_cmd), .sd_clk_pad(sd_clk)
 	);
-
+	always @ (posedge clkCPU)
+		dataOut_ctrl <= ctrlDataOut;
+	
 	//Buffer for SD DMA
-	//The controller is big-endian, so we choose to make the buffer big-endian
-	//while appending a reverse layer on CPU data bus.
-	wire [31:0] dataInBus_bigEndian = {dataInBus[7:0], dataInBus[15:8], dataInBus[23:16], dataInBus[31:24]};
-	wire [31:0] dataOut_bigEndian;
-	assign dataOut_data = {dataOut_bigEndian[7:0], dataOut_bigEndian[15:8], dataOut_bigEndian[23:16], dataOut_bigEndian[31:24]};
-	wire [3:0] weBus_bigEndian = {weBus[0], weBus[1], weBus[2], weBus[3]};
-
 	wire buf_enb;
 	wire [3:0] buf_web;
 	reg buf_readAck;
 	reg [9:0] prevAddr;
-	Buffer_SD buffer(.clka(clkCPU), .addra(addrBus[11:2]), .dina(dataInBus_bigEndian),
-		.wea(weBus_bigEndian), .ena(en_data), .douta(dataOut_bigEndian),
+	Buffer_SD buffer(.clka(clkCPU), .addra(addrBus[11:2]), .dina(dataInBus),
+		.wea(weBus), .ena(en_data), .douta(dataOut_data),
 		.clkb(clkCPU), .addrb(ws_buf_addr[11:2]), .dinb(ws_buf_din),
 		.web(buf_web), .enb(buf_enb), .doutb(ws_buf_dout));
 	assign buf_web = ws_buf_we? ws_buf_dm: 4'h0;
