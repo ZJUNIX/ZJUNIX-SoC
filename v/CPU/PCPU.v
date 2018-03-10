@@ -42,7 +42,7 @@ module PCPU #(
 	//Note: a stall within a stage should stall all the stages before it,
 	//and flush the stage right after it.
 	//A flush to a stage should stall all stages before it.
-	wire masterStall = iStall | dStall;
+//	wire masterStall = iStall | dStall;
 	wire ID_excFlush, EX_excFlush, MEM_excFlush;
 	wire MEM_excFlush_unmapped;
 	wire [4:0] INT_sync;
@@ -71,6 +71,7 @@ module PCPU #(
 	wire [1:0] ID_cacheOp;
 	wire [31:0] ID_PC;
 	wire ID_bd;
+	wire ID_instValid;
 	wire [3:0] ID_copAccess;
 	
 	wire stallRs, stallRt;
@@ -78,6 +79,7 @@ module PCPU #(
 	
 	//EX stage signals
 	wire EX_stall, EX_stallOut, EX_flush;
+	wire EX_branchCond;
 	wire [2:0] EX_wbSrc;
 	wire [31:0] EX_inst;
 	wire [4:0] EX_wbReg;
@@ -91,6 +93,7 @@ module PCPU #(
 	wire EX_ALUValid;
 	wire [31:0] EX_PC;
 	wire EX_bd;
+	wire EX_instValid;
 	wire EX_iCacheOp, EX_dCacheOp;
 	wire exc_ov, exc_tr, exc_adEL, exc_adES;
 	wire exc_TLBMissD, exc_TLBInvalidD, exc_TLBModD;
@@ -130,11 +133,12 @@ module PCPU #(
 	wire [31:0] PC_exc;
 	wire excReq;
 
-	TranslatePredict TP(.clk(clk), .rst(rst), .stall(masterStall),
+	TranslatePredict TP(.clk(clk), .rst(rst), .stall(1'b0),
 		.vPC(IF_PC), .pPCin(pPC_TLB), .pPCOut(addrIBusMapped), .pageMask(pageMask_TLB),
 		.flush(TP_flushOut));
-	BranchPredictor BP(.clk(clk), .rst(rst), .stall(masterStall | ID_stall), .exc_flush(excReq),
-		.PC(IF_PC), .branchDest(ID_nextPC), .branchCond(~(ID_branchCond[2] & ID_branchCond[1])),
+	BranchPredictor BP(.clk(clk), .rst(rst), .stall(ID_stall), .exc_flush(excReq),
+		.PC(IF_PC), .branchDest(ID_nextPC),
+		.ID_branchCond(ID_branchCond[2:1] != 2'b11), .EX_branchCond(EX_branchCond),
 		.branchTaken(EX_branchTaken), .nextPC(PC_BP), .BP_flush(BP_flushOut));
 	assign exc_adErrI = IF_PC[1] | IF_PC[0] | (IF_PC[31] & cp0_userMode);
 	
@@ -142,18 +146,23 @@ module PCPU #(
 	begin
 		if(rst)
 			IF_PC <= 32'hbfc00000;
-		else if(~masterStall)
-		begin
-			if(excReq)
-				IF_PC <= PC_exc;
-			else if(~IF_stall)
-				IF_PC <= PC_BP;
-		end
+		else if(excReq)
+			IF_PC <= PC_exc;
+		else if(BP_flushOut | !IF_stall)
+			IF_PC <= PC_BP;
+		
+//		else if(~masterStall)
+//		begin
+//			if(excReq)
+//				IF_PC <= PC_exc;
+//			else if(~IF_stall)
+//				IF_PC <= PC_BP;
+//		end
 	end
 	
 	//ID stage logic
-	StageID stageID(.clk(clk), .rst(rst), .stall(ID_stall | masterStall),
-		.flush((ID_flush | ID_excFlush) & ~masterStall), .TP_flush(TP_flushOut),
+	StageID stageID(.clk(clk), .rst(rst), .stall(ID_stall),
+		.flush(ID_flush | ID_excFlush), .TP_flush(TP_flushOut),
 		.instIn(instIn), .PC(IF_PC), .rsFwd(ID_rsFwd), .rtFwd(ID_rtFwd),
 		.nextPC(ID_nextPC), .fwdEN(ID_fwdEN), .opA(ID_opA), .opB(ID_opB),
 		.exCtrl(ID_exCtrl), .memCtrl(ID_memCtrl), .wbReg(ID_wbReg),
@@ -161,7 +170,7 @@ module PCPU #(
 		.RIexception(exc_RI), .syscall(exc_syscall), .breakpoint(exc_bp),
 		.cp0Op(cp0Op), .cacheOp(ID_cacheOp), .instOut(ID_inst),
 		.PCOut(ID_PC), .copAccess(ID_copAccess), .cpU(exc_cpU),
-		.bd(ID_bd), .bd_IF(IF_bd));
+		.bd(ID_bd), .bd_IF(IF_bd), .instValid(ID_instValid));
 	//Forwarding logic
 	assign MEM_rtFwd = ((MEM_wbReg == EX_inst[20:16]) & |MEM_wbReg)? MEM_wbData: rtDelay;
 	GprFwdUnit fwdRs(.regFile(rs), .ALUout(EX_ALUout), .dataToReg(MEM_wbData),
@@ -172,8 +181,8 @@ module PCPU #(
 		.IDEX_dv(EX_ALUValid), .EXMEM_wb(MEM_wbReg), .dataOut(ID_rtFwd), .stall(stallRt));
 	
 	//EX stage logic
-	StageEX stageEX(.clk(clk), .rst(rst), .stallIn(EX_stall | masterStall),
-		.flush((EX_flush | EX_excFlush) & ~masterStall),
+	StageEX stageEX(.clk(clk), .rst(rst), .stallIn(EX_stall),
+		.flush(EX_flush | EX_excFlush),
 		.instIn(ID_inst), .opA(ID_opA), .opB(ID_opB), .rsFwd(ID_rsFwd), .rtFwd(ID_rtFwd),
 		.exCtrl(ID_exCtrl), .memCtrlIn(ID_memCtrl), .wbRegIn(ID_wbReg), .wbCond(ID_wbCond),
 		.wbSrcIn(ID_wbSrc), .branchCond(ID_branchCond), .userMode(cp0_userMode), .cacheOp(ID_cacheOp),
@@ -181,13 +190,14 @@ module PCPU #(
 		.memCtrlOut(EX_memCtrl), .regHi(EX_regHi), .regLo(EX_regLo),
 		.memAddrOut(EX_memAddr), .memDataOut(dataOut), .memReq(EX_memReq), .memW_1b(EX_memW_1b),
 		.memWrite(EX_memW), .ov(exc_ov), .trap(exc_tr), .adEL(exc_adEL), .adES(exc_adES),
-		.iCacheOp(EX_iCacheOp), .dCacheOp(EX_dCacheOp),
+		.iCacheOp(EX_iCacheOp), .dCacheOp(EX_dCacheOp), .branchCond_out(EX_branchCond),
 		.stallOut(EX_stallOut), .branchTaken(EX_branchTaken), .ALUValid(EX_ALUValid),
-		.PCIn(ID_PC), .PCOut(EX_PC), .bdIn(ID_bd), .bdOut(EX_bd));
+		.PCIn(ID_PC), .PCOut(EX_PC), .bdIn(ID_bd), .bdOut(EX_bd),
+		.instValidIn(ID_instValid), .instValidOut(EX_instValid));
 	
 	//MEM stage logic
-	StageMem stageMem(.clk(clk), .rst(rst), .stall(MEM_stall | dStall),
-		.flush((MEM_flush | MEM_excFlush | iStall) & ~dStall),
+	StageMem stageMem(.clk(clk), .rst(rst), .stall(MEM_stall),
+		.flush(MEM_flush | MEM_excFlush),
 		.memCtrl(EX_memCtrl), .wbSrc(EX_wbSrc), .wbRegIn(EX_wbReg),
 		.ALUout(EX_ALUout), .rtFwdMem(MEM_rtFwd), .regHi(EX_regHi), .regLo(EX_regLo),
 		.cp0RegOut(cp0RegOut), .memDataIn(dataIn), .wbRegOut(MEM_wbReg),
@@ -215,28 +225,40 @@ module PCPU #(
 		.regWired(TLB_CP0[324:320]), .regRandom(TLB_CP0[329:325]),
 		.regWiredWrite(TLB_CP0[330]), .op(TLB_CP0[332:331]));
 	
-	ExcControl exceptionCtrl(.clk(clk), .rst(rst), .stall(masterStall),
-		.adErrI(exc_adErrI), .TLBMissI(exc_TLBMissI & ~exc_adErrI), .TLBInvalidI(exc_TLBInvalidI), .interrupt(exc_interrupt),
-		.RI(exc_RI), .syscall(exc_syscall), .breakpoint(exc_bp), .cpU(exc_cpU),
-		.overflow(exc_ov), .trap(exc_tr), .adEL(exc_adEL), .adES(exc_adES),
-		.memWrite(EX_memW_1b), .TLBMissD(exc_TLBMissD & ~(exc_adEL | exc_adES)),
-		.TLBInvalidD(exc_TLBInvalidD), .TLBModD(exc_TLBModD), .eret(CP0_EXC_eret),
+	ExcControl exceptionCtrl(.clk(clk), .rst(rst),
+		.adErrI(exc_adErrI),
+		.TLBMissI(exc_TLBMissI & ~exc_adErrI),
+		.TLBInvalidI(exc_TLBInvalidI),
+		.interrupt(exc_interrupt & EX_instValid),
+		.RI(exc_RI),
+		.syscall(exc_syscall),
+		.breakpoint(exc_bp),
+		.cpU(exc_cpU),
+		.overflow(exc_ov),
+		.trap(exc_tr),
+		.adEL(exc_adEL),
+		.adES(exc_adES),
+		.memWrite(EX_memW_1b),
+		.TLBMissD(exc_TLBMissD & ~(exc_adEL | exc_adES)),
+		.TLBInvalidD(exc_TLBInvalidD),
+		.TLBModD(exc_TLBModD),
+		.eret(CP0_EXC_eret),
 		.pipelineFlush({ID_flush, EX_flush, MEM_flush}),
-		.ID_PC(ID_PC), .EX_PC(EX_PC), .Mem_PC(MEM_PC),
-		.ID_BD(ID_bd), .EX_BD(EX_bd), .Mem_BD(MEM_bd),
+		.IF_PC(IF_PC), .ID_PC(ID_PC), .EX_PC(EX_PC),
+		.IF_BD(IF_bd), .ID_BD(ID_bd), .EX_BD(EX_bd),
 		.ID_excFlush(ID_excFlush), .EX_excFlush(EX_excFlush), .Mem_excFlush(MEM_excFlush),
 		.excPC(PC_exc), .useExcPC(excReq), .Mem_excFlush_unmapped(MEM_excFlush_unmapped),
-		.regEPCIn(CP0_EXC_EPC), .regErrorEPCIn(CP0_EXC_ErrorEPC),
-		.statusEXL(cp0_statusEXL), .statusERL(cp0_statusERL),
-		.statusBEV(cp0_statusBEV), .causeIV(cp0_causeIV),
+		.regEPCIn(CP0_EXC_EPC),
+		.regErrorEPCIn(CP0_EXC_ErrorEPC),
 		.regEPCOut(EXC_CP0_EPC), .bdOut(EXC_CP0_bd),
 		.excCodeOut(EXC_CP0_excCode), .excAccept(EXC_CP0_excAccept),
-		.IF_PC(IF_PC), .memVAddr(EX_memAddr),
+		.statusEXL(cp0_statusEXL), .statusERL(cp0_statusERL),
+		.statusBEV(cp0_statusBEV), .causeIV(cp0_causeIV),
+		.memVAddr(EX_memAddr),
 		.badVAddr(EXC_CP0_badVAddr), .writeBadVAddr(EXC_CP0_writeBadVAddr));
 	
-	Cp0 cop0(.clk(clk), .rst(rst), .stall(masterStall),
-		.EX_flush((EX_flush | EX_excFlush) & ~masterStall),
-		.MEM_flush(MEM_flush | MEM_excFlush),
+	Cp0 cop0(.clk(clk), .rst(rst),
+		.EX_flush(EX_flush | EX_excFlush),
 		.op(cp0Op), .rdField(ID_inst[15:11]), .selField(ID_inst[2:0]),
 		.copNum(ID_inst[27:26]), .dataIn(ID_rtFwd),
 		.eret(CP0_EXC_eret), .dataOut(cp0RegOut), .interruptReq(INT_sync),
@@ -259,11 +281,11 @@ module PCPU #(
 
 	//Stall & flush logic
 	assign MEM_flush = EX_stallOut & ~MEM_stall;
-	assign EX_flush = (stallRs | stallRt | TP_flushOut) & ~EX_stall;
-	assign ID_flush = BP_flushOut & ~ID_stall;
-	assign MEM_stall = 1'b0;
+	assign EX_flush = (stallRs | stallRt | iStall | TP_flushOut) & ~EX_stall;
+	assign ID_flush = (BP_flushOut & ~TP_flushOut) & ~ID_stall;
+	assign MEM_stall = dStall;
 	assign EX_stall = EX_stallOut | MEM_stall;
-	assign ID_stall = stallRs | stallRt | EX_stall;
+	assign ID_stall = stallRs | stallRt | iStall | EX_stall;
 	assign IF_stall = TP_flushOut | ID_stall;
 
 	assign stbDBusMapped = EX_memReq & ~MEM_excFlush & mappedDBus;
@@ -272,7 +294,7 @@ module PCPU #(
 	assign dCacheOp = EX_dCacheOp & ~MEM_excFlush;
 	assign dataMask = EX_memW;
 	assign memWE = EX_memW_1b;
-	assign stbIBusMapped = ~ID_excFlush & mappedIBus;
+	assign stbIBusMapped = mappedIBus;
 	assign stbIBus = ~mappedIBus;
 //	assign stbIBusMapped = 1'b1;
 //	assign stbIBus = 1'b1;

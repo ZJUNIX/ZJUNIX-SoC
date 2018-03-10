@@ -145,7 +145,7 @@ module SDC_Datapath #(
 	else
 	begin
 		//Timeout
-		if(int_timeout) errEvents[2] <= 4;
+		if(int_timeout) errEvents[4] <= 1;
 		//Frame error
 		if(rxFrameError && rxRunning) errEvents[3] <= 1;
 		//TX fifo underflow

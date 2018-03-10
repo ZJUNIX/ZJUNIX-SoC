@@ -20,52 +20,24 @@
 //////////////////////////////////////////////////////////////////////////////////
 module SDC_CRC16(
 	input clk, input ce, input din,
-	input clr, output reg [15:0] crc, output crc_out
+	input clr, output crc_out
 );
-	
-	wire inv = clr? 1'b0: crc_out ^ din;
-	assign crc_out = crc[15];
-	
+	reg [15:0] crc;
+	wire crc_in = clr? 1'b0: crc_out ^ din;
+	assign crc_out = crc[3] ^ crc[10] ^ crc[15];
 	always @ (posedge clk)
-	if(ce || clr)
-	begin
-		crc[15] <= crc[14];
-		crc[14] <= crc[13];
-		crc[13] <= crc[12];
-		crc[12] <= crc[11] ^ inv;
-		crc[11] <= crc[10];
-		crc[10] <= crc[ 9];
-		crc[ 9] <= crc[ 8];
-		crc[ 8] <= crc[ 7];
-		crc[ 7] <= crc[ 6];
-		crc[ 6] <= crc[ 5];
-		crc[ 5] <= crc[ 4] ^ inv;
-		crc[ 4] <= crc[ 3];
-		crc[ 3] <= crc[ 2];
-		crc[ 2] <= crc[ 1];
-		crc[ 1] <= crc[ 0];
-		crc[ 0] <= inv;
-	end
+	if(ce || clr) crc <= {crc[14:0], crc_in};
 	
 endmodule
 
 module SDC_CRC7(
 	input clk, input ce, input din,
-	input clr, output reg [6:0] crc, output crc_out
+	input clr, output crc_out
 );
-	wire inv = clr? 1'b0: crc_out ^ din;
-	assign crc_out = crc[6];
-	
+	reg [6:0] crc;
+	wire crc_in = clr? 1'b0: crc_out ^ din;
+	assign crc_out = crc[3] ^ crc[6];
 	always @ (posedge clk)
-	if(ce || clr)
-	begin
-		crc[6] <= crc[5];
-		crc[5] <= crc[4];
-		crc[4] <= crc[3];
-		crc[3] <= crc[2] ^ inv;
-		crc[2] <= crc[1];
-		crc[1] <= crc[0];
-		crc[0] <= inv;
-	end
+	if(ce || clr) crc <= {crc[5:0], crc_in};
 	
 endmodule

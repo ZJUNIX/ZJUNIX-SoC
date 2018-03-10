@@ -112,7 +112,7 @@ module SDC_DataReceiver #(
 	wire crcEn = (state == RX_DATA);
 	wire crcRst = rst || !crcEn;
 	
-	SDC_CRC16 crc[3:0] (.clk(clk), .ce(crcEn), .din(sdDat_reg), .clr(crcRst), .crc(), .crc_out(crcOut));
+	SDC_CRC16 crc[3:0] (.clk(clk), .ce(crcEn), .din(sdDat_reg), .clr(crcRst), .crc_out(crcOut));
 
 	
 endmodule

@@ -35,41 +35,43 @@ module CacheLRUBit(
 	
 endmodule
 
-module CacheTag #(
-	parameter SYNC_READ = 1
-)(
+module DCacheTag(
 	input clka, input [1:0] wea, input [8:0] addra,
-	input [35:0] dina, output [35:0] douta
+	input [35:0] dina, output reg [35:0] douta
 );
 	
 	reg [35:0] data[511:0];
 	
-	generate
-	if(SYNC_READ)
+	wire [3:0] _wea = {wea[1], wea[1], wea[0], wea[0]};
+	always @ (posedge clka)
 	begin
-		wire [3:0] _wea = {wea[1], wea[1], wea[0], wea[0]};
-		reg [35:0] _douta;
-		always @ (posedge clka)
-		begin
-			if(_wea[0]) data[addra][ 8: 0] = dina[ 8: 0];
-			if(_wea[1]) data[addra][17: 9] = dina[17: 9];
-			if(_wea[2]) data[addra][26:18] = dina[26:18];
-			if(_wea[3]) data[addra][35:27] = dina[35:27];
-			_douta <= data[addra];
-		end
-		assign douta = _douta;
+		if(_wea[0]) data[addra][ 8: 0] = dina[ 8: 0];
+		if(_wea[1]) data[addra][17: 9] = dina[17: 9];
+		if(_wea[2]) data[addra][26:18] = dina[26:18];
+		if(_wea[3]) data[addra][35:27] = dina[35:27];
+		douta <= data[addra];
 	end
-	else
-	begin
-		always @ (posedge clka)
-		begin
-			if(wea[0]) data[addra][17: 0] = dina[17: 0];
-			if(wea[1]) data[addra][35:18] = dina[35:18];
-		end
-		assign douta = data[addra];
-	end
-	endgenerate
+
+	integer i;
+	initial for(i = 0; i < 512; i = i+1) data[i] <= 36'h000040000;
 	
+endmodule
+
+module ICacheTag (
+	input clka, input [1:0] wea, input [8:0] addra, input [35:0] dina, output [35:0] douta,
+	input [8:0] addrb, output [35:0] doutb
+);
+	
+	reg [35:0] data[511:0];
+	
+	always @ (posedge clka)
+	begin
+		if(wea[0]) data[addra][17: 0] = dina[17: 0];
+		if(wea[1]) data[addra][35:18] = dina[35:18];
+	end
+	assign douta = data[addra];
+	assign doutb = data[addrb];
+
 	integer i;
 	initial for(i = 0; i < 512; i = i+1) data[i] <= 36'h000040000;
 	

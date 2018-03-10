@@ -19,8 +19,8 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 module Cp0(
-	input clk, input rst, input stall,
-	input EX_flush, input MEM_flush,
+	input clk, input rst,
+	input EX_flush,
 
 	//Interface to CPU
 	//These signals should be input at ID stage
@@ -158,7 +158,9 @@ module Cp0(
 	Cp0Reg #(.SOFTWARE_MASK(32'hffffffff), .RESET_STATE(0)) RegErrorEPC(.clk(clk), .rst(rst),
 		.sDin(dataIn_reg), .sWe(cp0RegWe[30]), .hDin(32'h0), .hWe(32'h0), .dout(regErrorEPC));
 
-	assign cp0RegWe = MEM_flush? 32'h0: cp0RegWe_reg;
+//	assign cp0RegWe = MEM_flush? 32'h0: cp0RegWe_reg;
+	assign cp0RegWe = cp0RegWe_reg;
+
 	//Config1 notes:
 	//Cache: 2-way, 64-byte, 512-set = 64KiB; TLB=32
 
@@ -272,38 +274,12 @@ module Cp0(
 			dataOut <= 32'h0;
 			statusEXL_reg <= 2'b00;
 		end
-		else if(~stall)
+		else
 		begin
 			rdField_reg <= rdField;
 			selField_reg <= selField;
 			dataIn_reg <= dataIn;
 			excAccept_reg <= excAccept;
-//			case(rdField_reg)
-//			5'h00: dataOut <= (|selField_reg)? 32'h0: regIndex;
-//			5'h01: dataOut <= (|selField_reg)? 32'h0: regRandom;
-//			5'h02: dataOut <= (|selField_reg)? 32'h0: regEntryLo0;
-//			5'h03: dataOut <= (|selField_reg)? 32'h0: regEntryLo1;
-//			5'h04: dataOut <= (|selField_reg)? 32'h0: regContext;
-//			5'h05: dataOut <= (|selField_reg)? 32'h0: regPageMask;
-//			5'h06: dataOut <= (|selField_reg)? 32'h0: regWired;
-//			5'h08: dataOut <= (|selField_reg)? 32'h0: regBadVAddr;
-//			5'h09: dataOut <= (|selField_reg)? 32'h0: regCount;
-//			5'h0a: dataOut <= (|selField_reg)? 32'h0: regEntryHi;
-//			5'h0b: dataOut <= (|selField_reg)? 32'h0: regCompare;
-//			5'h0c: dataOut <= (|selField_reg)? 32'h0: regStatus;
-//			5'h0d: dataOut <= (|selField_reg)? 32'h0: regCause;
-//			5'h0e: dataOut <= (|selField_reg)? 32'h0: regEPC;
-//			5'h0f: dataOut <= (|selField_reg)? 32'h0: regPRId;
-//			5'h1e: dataOut <= (|selField_reg)? 32'h0: regErrorEPC;
-//			5'h10: begin
-//				case(selField_reg)
-//				3'h0: dataOut <= regConfig;
-//				3'h1: dataOut <= regConfig1;
-//				default: dataOut <= 32'h0;
-//				endcase
-//			end
-//			default: dataOut <= 32'h0;
-//			endcase
 			case({rdField_reg, selField_reg})
 			8'b00000_000: dataOut <= regIndex;
 			8'b00001_000: dataOut <= regRandom;
@@ -340,7 +316,7 @@ module Cp0(
 			tlbr <= 1'b0;
 			eret <= 1'b0;
 		end
-		else if(~stall)
+		else
 		begin
 			cp0RegWe_reg[0] <= (op == 3'b010) & (rdField == 5'h00);
 			cp0RegWe_reg[1] <= (op == 3'b010) & (rdField == 5'h01);

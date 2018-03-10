@@ -41,11 +41,12 @@ module StageEX(
 	output reg iCacheOp, output reg dCacheOp,
 	//Other outputs
 	output ov, output reg trap, output adEL, output adES,
-	output stallOut, output reg branchTaken,
+	output stallOut, output reg branchTaken, output branchCond_out,
 	output ALUValid,
 	
 	input [31:0] PCIn, output reg [31:0] PCOut,
-	input bdIn, output reg bdOut
+	input bdIn, output reg bdOut,
+	input instValidIn, output reg instValidOut
 );
 	//EX stage pipeline registers
 	reg [12:0] exCtrl_reg;
@@ -68,6 +69,7 @@ module StageEX(
 			branchCond_reg <= 3'b111;
 			iCacheOp <= 1'b0;
 			dCacheOp <= 1'b0;
+			instValidOut <= 1'b0;
 		end
 		else if(~stallIn)
 		begin
@@ -79,6 +81,7 @@ module StageEX(
 			branchCond_reg <= branchCond;
 			iCacheOp <= cacheOp[0];
 			dCacheOp <= cacheOp[1];
+			instValidOut <= instValidIn;
 		end
 		if(~stallIn)
 		begin
@@ -165,5 +168,6 @@ module StageEX(
 	end
 	
 	assign memCtrlOut = memCtrl_reg[7]? 3'b000: memCtrl_reg[6:4];
+	assign branchCond_out = (branchCond_reg[2:1] != 2'b11);
 	
 endmodule

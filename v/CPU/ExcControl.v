@@ -18,7 +18,7 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-module ExcControl(input clk, input rst, input stall,
+module ExcControl(input clk, input rst, 
 	//IF stage exceptions
 	input adErrI, input TLBMissI, input TLBInvalidI,
 	//ID stage exceptions
@@ -30,8 +30,8 @@ module ExcControl(input clk, input rst, input stall,
 	//Pipeline flush signals to supress exceptions
 	input [2:0] pipelineFlush,//{ID_flush, EX_flush, MEM_flush}
 	//PC and BD
-	input [31:0] ID_PC, input [31:0] EX_PC, input [31:0] Mem_PC,
-	input ID_BD, input EX_BD, input Mem_BD,
+	input [31:0] ID_PC, input [31:0] EX_PC,// input [31:0] Mem_PC,
+	input ID_BD, input EX_BD, input IF_BD,// input Mem_BD,
 	//Output to CPU pipeline
 	output ID_excFlush, output EX_excFlush, output Mem_excFlush,
 	output [31:0] excPC, output useExcPC, output Mem_excFlush_unmapped,
@@ -46,9 +46,9 @@ module ExcControl(input clk, input rst, input stall,
 );
 	//AdEL(I), TLBInvalidI, TLBMissI, RI, Bp, Sys, cpU, Ov, Tr, AdEL, AdES, TLBMissDL, TLBMissDS, Mod, TLBInvalidDL, TLBInvalidDS, Int
 	reg [16:0] excSignalReg;
-	wire _IF_exc = (adErrI | TLBMissI | TLBInvalidI | interrupt) & ~pipelineFlush[2];
+	wire _IF_exc = (adErrI | TLBMissI | TLBInvalidI) & ~pipelineFlush[2];
 	wire _ID_exc = (RI | breakpoint | syscall | cpU) & ~pipelineFlush[1];
-	wire _EX_exc = (overflow | trap | adEL | adES | TLBMissD | TLBInvalidD | TLBModD) & ~pipelineFlush[0];
+	wire _EX_exc = (overflow | trap | adEL | adES | TLBMissD | TLBInvalidD | TLBModD | interrupt) & ~pipelineFlush[0];
 	wire _eret = eret & ~pipelineFlush[0];
 	
 	assign ID_excFlush = _IF_exc | _ID_exc | _EX_exc | _eret;
@@ -97,30 +97,31 @@ module ExcControl(input clk, input rst, input stall,
 	
 	reg [3:0] excCode;//bit 5 and 4 of excCode are always 0
 	reg [32:0] EPC_;
-	reg [31:0] IF_PC_reg;
+	reg [32:0] IF_PC_reg, ID_PC_reg, EX_PC_reg;
+	reg [31:0] IF_VAddr;
 	reg [31:0] memVAddr_reg;
 	always @*
 	begin
 		//AdEL(I), TLBInvalidI, TLBMissI, RI, Bp, Sys, cpU, Ov, Tr, AdEL, AdES, TLBMissDL, TLBMissDS, Mod, TLBInvalidDL, TLBInvalidDS, Int
 		casex(excSignalReg)
-		17'b10000000000000000: begin excCode <= `CODE_ADEL; EPC_ <= {ID_BD, ID_PC}; end
-		17'bx1000000000000000: begin excCode <= `CODE_TLBL; EPC_ <= {ID_BD, ID_PC}; end
-		17'bxx100000000000000: begin excCode <= `CODE_TLBL; EPC_ <= {ID_BD, ID_PC}; end
-		17'bxxx10000000000000: begin excCode <= `CODE_RI;   EPC_ <= {EX_BD, EX_PC}; end
-		17'bxxxx1000000000000: begin excCode <= `CODE_BP;   EPC_ <= {EX_BD, EX_PC}; end
-		17'bxxxxx100000000000: begin excCode <= `CODE_SYS;  EPC_ <= {EX_BD, EX_PC}; end
-		17'bxxxxxx10000000000: begin excCode <= `CODE_CPU;  EPC_ <= {EX_BD, EX_PC}; end
-		17'bxxxxxxx1000000000: begin excCode <= `CODE_OV;   EPC_ <= {EX_BD, EX_PC}; end
-		17'bxxxxxxxx100000000: begin excCode <= `CODE_TR;   EPC_ <= {Mem_BD, Mem_PC}; end
-		17'bxxxxxxxxx10000000: begin excCode <= `CODE_ADEL; EPC_ <= {Mem_BD, Mem_PC}; end
-		17'bxxxxxxxxxx1000000: begin excCode <= `CODE_ADES; EPC_ <= {Mem_BD, Mem_PC}; end
-		17'bxxxxxxxxxxx100000: begin excCode <= `CODE_TLBL; EPC_ <= {Mem_BD, Mem_PC}; end
-		17'bxxxxxxxxxxxx10000: begin excCode <= `CODE_TLBS; EPC_ <= {Mem_BD, Mem_PC}; end
-		17'bxxxxxxxxxxxxx1000: begin excCode <= `CODE_MOD;  EPC_ <= {Mem_BD, Mem_PC}; end
-		17'bxxxxxxxxxxxxxx100: begin excCode <= `CODE_TLBL; EPC_ <= {Mem_BD, Mem_PC}; end
-		17'bxxxxxxxxxxxxxxx10: begin excCode <= `CODE_TLBS; EPC_ <= {Mem_BD, Mem_PC}; end
-		17'bxxxxxxxxxxxxxxxx1: begin excCode <= `CODE_INT;  EPC_ <= {ID_BD, ID_PC}; end
-		default: begin excCode <= 4'h0; EPC_ <= {Mem_BD, Mem_PC}; end
+		17'b10000000000000000: begin excCode <= `CODE_ADEL; EPC_ <= IF_PC_reg; end
+		17'bx1000000000000000: begin excCode <= `CODE_TLBL; EPC_ <= IF_PC_reg; end
+		17'bxx100000000000000: begin excCode <= `CODE_TLBL; EPC_ <= IF_PC_reg; end
+		17'bxxx10000000000000: begin excCode <= `CODE_RI;   EPC_ <= ID_PC_reg; end
+		17'bxxxx1000000000000: begin excCode <= `CODE_BP;   EPC_ <= ID_PC_reg; end
+		17'bxxxxx100000000000: begin excCode <= `CODE_SYS;  EPC_ <= ID_PC_reg; end
+		17'bxxxxxx10000000000: begin excCode <= `CODE_CPU;  EPC_ <= ID_PC_reg; end
+		17'bxxxxxxx1000000000: begin excCode <= `CODE_OV;   EPC_ <= EX_PC_reg; end
+		17'bxxxxxxxx100000000: begin excCode <= `CODE_TR;   EPC_ <= EX_PC_reg; end
+		17'bxxxxxxxxx10000000: begin excCode <= `CODE_ADEL; EPC_ <= EX_PC_reg; end
+		17'bxxxxxxxxxx1000000: begin excCode <= `CODE_ADES; EPC_ <= EX_PC_reg; end
+		17'bxxxxxxxxxxx100000: begin excCode <= `CODE_TLBL; EPC_ <= EX_PC_reg; end
+		17'bxxxxxxxxxxxx10000: begin excCode <= `CODE_TLBS; EPC_ <= EX_PC_reg; end
+		17'bxxxxxxxxxxxxx1000: begin excCode <= `CODE_MOD;  EPC_ <= EX_PC_reg; end
+		17'bxxxxxxxxxxxxxx100: begin excCode <= `CODE_TLBL; EPC_ <= EX_PC_reg; end
+		17'bxxxxxxxxxxxxxxx10: begin excCode <= `CODE_TLBS; EPC_ <= EX_PC_reg; end
+		17'bxxxxxxxxxxxxxxxx1: begin excCode <= `CODE_INT;  EPC_ <= EX_PC_reg; end
+		default: begin excCode <= 4'h0; EPC_ <= IF_PC_reg; end
 		endcase
 	end
 	assign regEPCOut = EPC_[31:0];
@@ -129,8 +130,8 @@ module ExcControl(input clk, input rst, input stall,
 	
 	always @ (posedge clk)
 	begin
-		if(~stall)
-		begin
+//		if(~stall)
+//		begin
 			//AdEL(I), TLBInvalidI, TLBMissI, RI, Bp, Sys, cpU, Ov, Tr, AdEL, AdES, TLBMissDL, TLBMissDS, Mod, TLBInvalidDL, TLBInvalidDS, Int
 			excSignalReg[16] <= adErrI;
 			excSignalReg[15] <= TLBInvalidI;
@@ -142,13 +143,16 @@ module ExcControl(input clk, input rst, input stall,
 			excSignalReg[2] <= TLBInvalidD & ~memWrite;
 			excSignalReg[1] <= TLBInvalidD & memWrite;
 			excSignalReg[0] <= interrupt;
-			IF_PC_reg <= IF_PC;
+			IF_PC_reg <= {IF_BD, IF_BD? ID_PC: IF_PC};
+			ID_PC_reg <= {ID_BD, ID_PC};
+			EX_PC_reg <= {EX_BD, EX_PC};
+			IF_VAddr <= IF_PC;
 			memVAddr_reg <= memVAddr;
-		end
+//		end
 	end
 	
 	assign regEPCOut = EPC_[31:0];
-	assign badVAddr = (|excSignalReg[16:14])? IF_PC_reg: memVAddr_reg;
+	assign badVAddr = (|excSignalReg[16:14])? IF_VAddr: memVAddr_reg;
 	assign writeBadVAddr = |{excSignalReg[16:14], excSignalReg[7:1]};
 	
 endmodule

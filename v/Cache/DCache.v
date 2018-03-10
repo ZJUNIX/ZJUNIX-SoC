@@ -123,7 +123,7 @@ module DCacheFSM_CPU(
 	
 	reg [8:0] tagAddr = 0;
 	
-	CacheTag #(.SYNC_READ(1)) cacheTag(.clka(clk), .wea(tagWe),
+	DCacheTag cacheTag(.clka(clk), .wea(tagWe),
 		.addra(tagWSel? tagAddr: addrIn[14:6]), .dina(tagDin), .douta({tag1, tag0}));
 	CacheLRUBit cacheLRU(.clk(clk), .req(req_reg), .addr(tagAddr), .hit({hit1, hit0}), .flag(LRUBit));
 	

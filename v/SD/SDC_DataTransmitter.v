@@ -115,7 +115,7 @@ module SDC_DataTransmitter(
 	wire crcRst = rst || !crcEn;
 	wire [3:0] crcOut;
 	
-	SDC_CRC16 crc[3:0] (.clk(clk), .ce(crcEn), .din(byteShift[7:4]), .clr(crcRst), .crc(), .crc_out(crcOut));
+	SDC_CRC16 crc[3:0] (.clk(clk), .ce(crcEn), .din(byteShift[7:4]), .clr(crcRst), .crc_out(crcOut));
 	wire _oe = (state == TX_START) || (state == TX_DATA) || (state == TX_LAST)
 			||(state == TX_CRC) || (state == TX_STOP);
 	

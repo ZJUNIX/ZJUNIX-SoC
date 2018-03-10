@@ -116,7 +116,7 @@ module SDC_Cmdpath #(
 	wire crcEn = (state == TX_DATA) || (state == RX_DATA);
 	wire crcClr = rst || !crcEn;
 	wire crcDin = (state == TX_DATA)? cmdTxShift[39]: sdCmd_i_reg;
-	SDC_CRC7 crc(.clk(clk), .ce(crcEn), .clr(crcClr), .din(crcDin), .crc(), .crc_out(crcOut));
+	SDC_CRC7 crc(.clk(clk), .ce(crcEn), .clr(crcClr), .din(crcDin), .crc_out(crcOut));
 	
 	reg [CMD_TIMEOUT_W-1:0] timeoutCounter = 0;
 	

@@ -34,7 +34,8 @@ module StageID(
 	
 	input [3:0] copAccess, output cpU,
 
-	output reg [31:0] instOut, output reg [31:0] PCOut, output reg bd, output bd_IF
+	output reg [31:0] instOut, output reg [31:0] PCOut, output reg bd, output bd_IF,
+	output reg instValid
 );
 
 //exCtrl: ALUOp(4), mulOp(4), ALUValid(1), mulWait(1), trap(3)
@@ -54,9 +55,15 @@ module StageID(
 	always @ (posedge clk)
 	begin
 		if(rst | flush)
+		begin
 			instOut <= 32'h0;
+			instValid <= 1'b0;
+		end
 		else if(~stall)
+		begin
 			instOut <= instIn;
+			instValid <= 1'b1;
+		end
 
 		if(~stall)
 		begin

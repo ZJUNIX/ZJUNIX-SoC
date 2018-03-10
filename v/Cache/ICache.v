@@ -74,6 +74,7 @@ module ICacheFSM_CPU(
 );
 	
 	wire [17:0] tag0, tag1;
+	wire [17:0] _tag0, _tag1;
 	wire LRUBit;
 	wire tagWSel;
 	
@@ -87,8 +88,10 @@ module ICacheFSM_CPU(
 	reg [8:0] tagAddr = 0;
 	reg [16:0] invalidateTag;
 	
-	CacheTag #(.SYNC_READ(0)) cacheTag(.clka(clk), .wea(tagWe),
-		.addra(tagWSel? tagAddr: addrIn[14:6]), .dina(tagDin), .douta({tag1, tag0}));
+//	CacheTag #(.SYNC_READ(0)) cacheTag(.clka(clk), .wea(tagWe),
+//		.addra(tagWSel? tagAddr: addrIn[14:6]), .dina(tagDin), .douta({tag1, tag0}));
+	ICacheTag cacheTag(.clka(clk), .wea(tagWe), .addra(tagAddr), .dina(tagDin), .douta({_tag1, _tag0}),
+		.addrb(addrIn[14:6]), .doutb({tag1, tag0}));
 	CacheLRUBit cacheLRU(.clk(clk), .req(req), .addr(addrIn[14:6]), .hit({hit1, hit0}), .flag(LRUBit));
 	
 	localparam STATE_IDLE = 2'h0;
@@ -118,6 +121,7 @@ module ICacheFSM_CPU(
 		else if(stall)
 		begin
 			state <= STATE_WAIT;
+			tagAddr <= addrIn[14:6];
 			replaceStb <= 1'b1;
 			replaceBlock <= {LRUBit, addrIn[31:6]};
 		end
@@ -135,15 +139,16 @@ module ICacheFSM_CPU(
 	always @*
 	case(state)
 	STATE_WAIT: begin
-		tagDin <= {2{1'b1, addrIn[31:15]}};
-		tagWe <= {2{completeStb}} & {LRUBit, ~LRUBit};
+//		tagDin <= {2{1'b1, addrIn[31:15]}};
+		tagDin <= {2{1'b1, replaceBlock[25:9]}};
+		tagWe <= {2{completeStb}} & {replaceBlock[26], ~replaceBlock[26]};
 	end
 	STATE_INVALIDATE: begin
 		tagWe <= 2'b11;
-		tagDin[35] <= tag1[17] & (tag1[16:0] != invalidateTag);
-		tagDin[17] <= tag0[17] & (tag0[16:0] != invalidateTag);
-		tagDin[34:18] <= tag1[16:0];
-		tagDin[16: 0] <= tag0[16:0];
+		tagDin[35] <= _tag1[17] & (_tag1[16:0] != invalidateTag);
+		tagDin[17] <= _tag0[17] & (_tag0[16:0] != invalidateTag);
+		tagDin[34:18] <= _tag1[16:0];
+		tagDin[16: 0] <= _tag0[16:0];
 	end
 	default: begin
 		tagDin <= 36'h000040000;

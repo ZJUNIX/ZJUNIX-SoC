@@ -42,12 +42,13 @@ module TLB(input clk, input rst, input statusERL,
 	input regWiredWrite, input [1:0] op//00=normal, 01=TLBR, 10=TLBWI, 11=TLBWR; TLBP and TLBR are always enabled
 );
 //Note: VIOLATION OF MIPS32 SPECIFICATION:
-//1. The value of Random register will not change to 31 after the Wired register is written,
-//   instead it points to the least-recently written, non-wired TLB entry.
-//2. Odd numbers of 1 bits in PageMask are also valid encoding(0x0001, 0x0007, etc),
+//1. Odd numbers of 1 bits in PageMask are also valid encoding(0x0001, 0x0007, etc),
 //   resulting in 17 possible page sizes(instead of 9).
 
-//TLB size 32 entries, LRU replacement strategy
+//Note: Implementation specific limitations
+//1. Consecutive TLBWR or TLBWI instructions will put the contents in TLB into an
+//   unpredictable state. TLB write instructions should be separated by at least
+//   one instruction apart. TLBR or TLBP instructions do not have this restriction.
 
 	wire [43:0] dataInHeader;
 	wire [49:0] dataInEntry;
@@ -59,8 +60,6 @@ module TLB(input clk, input rst, input statusERL,
 	wire [43:0] dataOutHeader;
 	wire [5:0] entryIndexI, entryIndexD;
 	wire [15:0] pageMaskI, pageMaskD;
-	
-//	wire [31:0] shift;
 	
 //Interface to COP0
 	assign dataInHeader[`PageMask] = regPageMaskIn[28:13];
@@ -81,7 +80,6 @@ module TLB(input clk, input rst, input statusERL,
 	assign regEntryLo1Out = {6'h0, dataOutEntry[`PFN1], dataOutEntry[`C1], dataOutEntry[`D1], dataOutEntry[`V1], dataOutHeader[`G]};
 	assign regEntryLo0Out = {6'h0, dataOutEntry[`PFN0], dataOutEntry[`C0], dataOutEntry[`D0], dataOutEntry[`V0], dataOutHeader[`G]};
 
-//	assign shift = op[1]? 32'hffffffff + {indexMatch[30:0], 1'b0}: 32'h0;
 	assign indexInHeader = (op == 2'b11)? regRandom: regIndexIn[4:0];
 	
 //Address translation logic
@@ -119,7 +117,7 @@ module TLB(input clk, input rst, input statusERL,
 		.indexC(regIndexIn[4:0]), .entryC(dataOutEntry), .headerC(dataOutHeader),
 		.indexD(indexInHeader), .entryD(dataInEntry), .headerD(dataInHeader));
 	
-	wire [31:0] headerWE = 1 << indexInHeader;
+	wire [31:0] headerWE = op[1]? (1 << indexInHeader): 32'h0;
 	wire [31:0] oddI, oddD;
 	TLBHeader headers[31:0] (.clk(clk), .we(headerWE),
 		.vAddrI(vAddrI), .matchI(matchI), .oddI(oddI),
@@ -135,10 +133,6 @@ module TLB(input clk, input rst, input statusERL,
 	assign entryIndexI[5] = |oddI;
 	assign entryIndexD[5] = |oddD;
 	
-//module TLBRNG(
-//		input clk, input rst, input next,
-//		input [4:0] regWired, output reg [4:0] regRandom = 5'd31
-//	);
 	TLBRNG randomGen(.clk(clk), .rst(regWiredWrite), .next(op == 2'b11),
 		.regWired(regWired), .regRandom(regRandom));
 	

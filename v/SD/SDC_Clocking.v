@@ -44,6 +44,7 @@ module SDC_Clocking #(
 	reg [DIV_BITS-1:0] divValue_sync = 255;
 	reg [DIV_BITS-1:0] divValue_reg = 255;
 	reg [DIV_BITS-1:0] divCounter = 0;
+	wire [DIV_BITS:0] divCounter2 = {divCounter, 1'b0};
 	reg sd_ce;
 	
 	always @ (posedge sd_clk_in)
@@ -62,14 +63,12 @@ module SDC_Clocking #(
 		else
 			divCounter <= divCounter + 1;
 	end
-//	BUFGCE sdclk_bufg(.I(sd_clk_in), .CE(sd_ce), .O(sd_clk_out));
-	BUFHCE #(.CE_TYPE("SYNC"), .INIT_OUT(0)) sdclk_buf(.I(sd_clk_in), .CE(sd_ce), .O(sd_clk_out));
 
-	wire [DIV_BITS:0] divCounter2 = {divCounter, 1'b0};
+	BUFHCE #(.CE_TYPE("SYNC"), .INIT_OUT(0)) sdclk_buf(.I(sd_clk_in), .CE(sd_ce), .O(sd_clk_out));
 	ODDR #(.DDR_CLK_EDGE("SAME_EDGE"), .INIT(1'b1), .SRTYPE("ASYNC")) sd_clk_fwd (
-		.Q(sd_clk_pad), .C(sd_clk_in), .CE(1'b1),
-		.D1(divCounter2 <= divValue_reg), .D2(divCounter2 <  divValue_reg),
-		.R(1'b0), .S(sd_rst_in)
+		.Q(sd_clk_pad), .C(sd_clk_in), .CE(1'b1), .R(1'b0), .S(sd_rst_in),
+		.D1(divCounter2 <= divValue_reg),
+		.D2(divCounter2 <  divValue_reg)
 	);
 	
 	//Command trigger signal synchronization

@@ -20,8 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 module BranchPredictor(
 	input clk, input rst, input stall, input [31:0] PC, input [31:0] branchDest,
-	input branchCond, input branchTaken, input exc_flush,
-	input EX_flush, input IF_stall,
+	input ID_branchCond, input EX_branchCond, input branchTaken, input exc_flush,
 	
 	output reg [31:0] nextPC, output BP_flush
 );
@@ -37,40 +36,34 @@ module BranchPredictor(
 	reg [12:0] PCbuf0, PCbuf1;
 	
 	reg [31:0] PCcorrection;
-	reg branchCond_buf;
 	reg prediction_buf;
-	reg [2:0] IF_stall_buf;
 	
 	always @ (posedge clk)
 	begin
 		if(rst | exc_flush)
 		begin
 			PCcorrection <= 32'h0;
-			branchCond_buf <= 1'b0;
 			prediction_buf <= 1'b0;
 			recRead_buf <= 2'b00;
 			PCbuf0 <= 13'h0;
 			PCbuf1 <= 13'h0;
-			IF_stall_buf <= 3'b000;
 		end
 		else if(~stall)
 		begin
 			PCcorrection <= prediction? PCincr: branchDest;
-			branchCond_buf <= branchCond;
 			prediction_buf <= prediction;
 			recRead_buf <= recRead;
 			PCbuf0 <= PC[14:2];
 			PCbuf1 <= PCbuf0;
-			IF_stall_buf <= {IF_stall_buf[1:0], IF_stall};
 		end
 	end
 	
 	//conditional branch AND prediction != actual
-	assign BP_flush = branchCond_buf & (branchTaken ^ prediction_buf);
+	assign BP_flush = EX_branchCond & (branchTaken ^ prediction_buf);
 	
 	always @*
 	begin
-		if(branchCond)//Conditional branch, use prediction
+		if(ID_branchCond)//Conditional branch, use prediction
 			nextPC <= prediction? branchDest: PCincr;
 		else//No conditional branch, test whether there is pending correction
 			nextPC <= BP_flush? PCcorrection: branchDest;
@@ -92,7 +85,7 @@ module BranchPredictor(
 	reg [1:0] _recRead;
 	always @ (posedge clk)
 	begin
-		if(branchCond_buf)
+		if(EX_branchCond)
 			recBuffer[PCbuf1] <= recWrite;
 		_recRead <= recBuffer[PC[14:2]];
 	end
