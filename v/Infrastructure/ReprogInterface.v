@@ -1,23 +1,11 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    21:31:12 08/05/2016 
-// Design Name: 
-// Module Name:    ReprogInterface 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * This module is inserted before one RAM port to allow rewritting contents in the RAM
+ * using data received from UART(or some other sources of a 1-byte-wide stream).
+ * Stream data should be little-endian(least-significant byte first).
+ * 
+ * @author Yunye Pu
+ */
 module ReprogInterface #(
 	parameter ADDR_WIDTH = 10
 )(

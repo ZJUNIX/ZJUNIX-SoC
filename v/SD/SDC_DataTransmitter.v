@@ -1,23 +1,11 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 01/09/2018 02:47:43 AM
-// Design Name: 
-// Module Name: SDC_DataTransmitter
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * SD data transmitter. Supports both 1-bit and 4-bit SD bus mode.
+ * CRC is computed and appended at the end of data frames.
+ * Data input is 8-bit wide, to minimize efforts on data alignment.
+ * 
+ * @author Yunye Pu
+ */
 module SDC_DataTransmitter(
 	input clk, input rst,
 	//Stream input

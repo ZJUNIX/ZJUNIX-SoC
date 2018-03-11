@@ -1,23 +1,24 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2016/11/07 10:44:23
-// Design Name: 
-// Module Name: CacheData
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Data payload for instruction and data cache. Data cache has dirty bits for each byte.
+ * 
+ * Data for instruction cache is a SDP RAM, constructed by concatenating 8 SDP RAM
+ * primitives whose read port width are 4 bits and write port width 64 bits.
+ * 
+ * Data for data cache is a TDP RAM, constructed by 8 TDP RAM primitives whose
+ * port widths are 9 bits and 36 bits. Downscaling is performed on CPU-side port,
+ * while upscaling is performed on DRAM-side port.
+ * DRAM-size upscaling degrades cache performance: continuous write/read operation
+ * is impossible on DRAM-side port, although currently DRAM-side port performs a single
+ * write or read on each cache miss.
+ * 
+ * Data for data cache has a delayed-decision feature: writing to data cache can be
+ * cancelled one cycle after the write operation by asserting writeReject high.
+ * This is necessary since data cache hit or miss is determined one cycle after the
+ * write operation.
+ * 
+ * @author Yunye Pu
+ */
 module DCacheDataCore(
 	input [12:0] addra, input clka, input [31:0] dina, output [31:0] douta, input ena, input [3:0] wea,
 	input [9:0] addrb, input clkb, input [255:0] dinb, input op, output [255:0] doutb, input enb, input web, output [31:0] dirtyb

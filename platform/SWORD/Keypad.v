@@ -1,23 +1,9 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    16:12:26 11/03/2016 
-// Design Name: 
-// Module Name:    Keypad 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * 5x5 button pad driver.
+ * 
+ * @author Yunye Pu
+ */
 module Keypad(
 	input clk, inout [4:0] keyX, inout [4:0] keyY,
 	output reg [5:0] keyCode, output ready, output [9:0] dbg_keyLine

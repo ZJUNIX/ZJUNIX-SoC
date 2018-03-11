@@ -1,23 +1,11 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 08/05/2017 02:02:02 AM
-// Design Name: 
-// Module Name: ResetGen
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Generates and synchronizes asynchronous reset signals in each clock domain.
+ * (Note: asynchronous reset should be synchronized so that it asserts asynchronously
+ * but de-asserts synchronously.)
+ * 
+ * @author Yunye Pu
+ */
 module ResetGen #(
 	parameter NUM_CLOCKS = 1,
 	parameter FILTER_BITS = 22

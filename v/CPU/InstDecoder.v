@@ -1,23 +1,9 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    17:46:40 05/05/2016 
-// Design Name: 
-// Module Name:    InstDecoder 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Instruction decoders.
+ * 
+ * @author Yunye Pu
+ */
 `define RI 32
 `define FWD 31:30
 `define ALUA 29:28

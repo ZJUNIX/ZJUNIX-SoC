@@ -1,23 +1,9 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    21:09:54 04/07/2016 
-// Design Name: 
-// Module Name:    ALU 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Arithmetic & logic unit; excluding multiplier and divider.
+ * 
+ * @author Yunye Pu
+ */
 module CLO(
 	input [31:0] val, output [5:0] res
 );
@@ -58,10 +44,7 @@ module ALU(
 	wire [32:0] add33 = A33 + B33;
 	wire [32:0] sub33 = A33 - B33;
 	
-//	wire [31:0] srlRes = B >> A[4:0];
 	wire signed [31:0] B_signed = B;
-//	wire [31:0] signB = {32{B[31]}} >> A[4:0];
-//	wire [31:0] sraRes = srlRes | ~signB;
 	
 	wire [5:0] cloRes;
 	
@@ -86,7 +69,6 @@ module ALU(
 		endcase
 	
 	CLO clo(.val(op[0]? A: ~A), .res(cloRes));
-//	CLO clz(.val(~A), .res(clzRes));
 		
 	assign overflow = ((add33[32] ^ add33[31]) & (op == 4'b0000)) | ((sub33[32] ^ sub33[31]) & (op == 4'b0010));
 	assign addRes = add33[31:0];

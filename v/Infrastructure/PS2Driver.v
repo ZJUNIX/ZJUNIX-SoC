@@ -1,23 +1,10 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 11/09/2016 10:13:28 PM
-// Design Name: 
-// Module Name: PS2Driver
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * PS/2 transceiver. Provides a stream interface similar to AXI-Stream.
+ * For proper PS/2 timing, the input clock should run at 100MHz.
+ * 
+ * @author Yunye Pu
+ */
 module PS2Driver #(
 	parameter PARITY = "ODD"
 )(

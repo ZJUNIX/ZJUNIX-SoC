@@ -1,23 +1,12 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    21:03:56 05/03/2016 
-// Design Name: 
-// Module Name:    FwdUnit 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * GPR forwarding unit.
+ * This module is one of the oldest modules in the SoC project.
+ * It might be absorbed into upper module in future revisions
+ * since this module contains very simple logic.
+ * 
+ * @author Yunye Pu
+ */
 module GprFwdUnit(
 	input [31:0] regFile, input [31:0] ALUout, input [31:0] dataToReg,
 	input [4:0] regRequest, input EN, input [4:0] IDEX_wb, input IDEX_dv, input [4:0] EXMEM_wb,
@@ -32,10 +21,10 @@ module GprFwdUnit(
 	assign stall = &{sel[2], sel[1], ~IDEX_dv};
 	
 	always @*
-		case(sel)
-		3'b101: dataOut <= dataToReg;
-		3'b110, 3'b111: dataOut <= ALUout;
-		default: dataOut <= regFile;
-		endcase
+	case(sel)
+	3'b101: dataOut <= dataToReg;
+	3'b110, 3'b111: dataOut <= ALUout;
+	default: dataOut <= regFile;
+	endcase
 	
 endmodule

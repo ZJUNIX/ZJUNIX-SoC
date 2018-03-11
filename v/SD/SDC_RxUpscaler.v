@@ -1,23 +1,10 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 01/07/2018 03:49:10 PM
-// Design Name: 
-// Module Name: SDC_RxUpscaler
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * 1-byte to 4-byte upscaler on SD data receiving path.
+ * Also combines data packets into a single stream.
+ * 
+ * @author Yunye Pu
+ */
 module SDC_RxUpscaler #(
 	parameter BLKCNT_W = 16
 )(

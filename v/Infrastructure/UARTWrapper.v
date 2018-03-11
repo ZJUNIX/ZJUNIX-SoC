@@ -1,23 +1,11 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 11/22/2016 06:56:16 PM
-// Design Name: 
-// Module Name: UARTWrapper
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Intergrates the UART transceiver and receive & transmit buffers
+ * to form a port attachable to SoC bus.
+ * clkUART should run at 57.6MHz to get a default baud rate 115200.
+ * 
+ * @author Yunye Pu
+ */
 module UARTWrapper #(
 	parameter DEPTH = 7
 )(

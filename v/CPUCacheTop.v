@@ -1,23 +1,11 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 04/17/2017 06:37:57 PM
-// Design Name: 
-// Module Name: CPUCacheTop
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * The top module integrating CPU and cache, along with
+ * arbiter logic between two wishbone masters(instruction
+ * cache and data cache). Exposes 3 buses to outer logic.
+ * 
+ * @author Yunye Pu
+ */
 module CPUCacheTop #(
 	parameter CLKCPU_PERIOD = 10,
 	parameter CLKDDR_PERIOD = 5
@@ -43,12 +31,6 @@ module CPUCacheTop #(
 	wire iCacheStall, dCacheStall;
 	wire mappedIBus, mappedDBus;
 	reg mappedDBus_reg;
-//	reg [31:0] addrDBusMapped_reg;
-//	reg dCacheStb_reg;
-//	reg [31:0] doutDBus_reg;
-//	reg [3:0] dmDBus_reg;
-//	reg weDBus_reg;
-//	reg dCacheOp_reg;
 	
 	wire [31:0] cpuInstIn, cpuDataIn;
 	wire [31:0] iCacheOut, dCacheOut;
@@ -74,15 +56,7 @@ module CPUCacheTop #(
 		.dbg_IDPC(dbg_IDPC), .dbg_EXPC(dbg_EXPC), .dbg_MEMPC(dbg_MEMPC));
 
 	always @ (posedge clkCPU)
-	if(~dStall)begin
-//		addrDBusMapped_reg <= addrDBusMapped;
-//		dCacheStb_reg <= dCacheStb;
-		mappedDBus_reg <= mappedDBus;
-//		doutDBus_reg <= doutDBus;
-//		dmDBus_reg <= dmDBus;
-//		weDBus_reg <= weDBus;
-//		dCacheOp_reg <= dCacheOp;
-	end
+	if(~dStall) mappedDBus_reg <= mappedDBus;
 	
 	assign cpuInstIn = mappedIBus? iCacheOut: dinIBus;
 	assign cpuDataIn = mappedDBus_reg? dCacheOut: dinDBus;
@@ -141,15 +115,4 @@ module CPUCacheTop #(
 	PipeReg #(2) rstCPU_sync(.clk(clkCPU), .i(rst), .o(rstCPU));
 	PipeReg #(2) rstDDR_sync(.clk(clkDDR), .i(rst), .o(rstDDR));
 	
-//	dbgModule dbg(.clk(clkCPU),
-//		.probe0(addrIBus), .probe1(cpuInstIn),
-//		.probe2(addrDBus), .probe3(cpuDataIn), .probe4(doutDBus),
-//		.probe5(dmDBus),
-//		.probe6(iCacheStb), .probe7(dCacheStall), .probe8(iCacheStall)
-//	);
-	
-//	dbgModule dbg(.clk(clkDDR),
-//		.probe0(addrDDR), .probe1(dinDDR), .probe2(doutDDR), .probe3(dmDDR),
-//		.probe4(cycDDR), .probe5(stbDDR), .probe6(weDDR), .probe7(ackDDR));
-
 endmodule

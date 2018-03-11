@@ -1,3 +1,8 @@
+/**
+ * Definition of bit fields in TLB data structure.
+ * 
+ * @author Yunye Pu
+ */
 `define PageMask 43:28
 `define VPN2 27:9
 `define G 8

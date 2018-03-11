@@ -1,23 +1,9 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    19:38:09 05/03/2016 
-// Design Name: 
-// Module Name:    stageEX 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * EX stage logic: arithmetic & logic operation and memory reference data alignment.
+ * 
+ * @author Yunye Pu
+ */
 module StageEX(
 	input clk, input rst, input stallIn, input flush,
 	//EX stage signals input:

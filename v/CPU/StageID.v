@@ -1,23 +1,9 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    19:54:29 05/04/2016 
-// Design Name: 
-// Module Name:    StageID 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * ID stage logic: instruction decode.
+ * 
+ * @author Yunye Pu
+ */
 module StageID(
 	input clk, input rst, input stall, input flush, input TP_flush,
 	input [31:0] instIn, input [31:0] PC,

@@ -1,23 +1,10 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 01/12/2018 01:37:53 AM
-// Design Name: 
-// Module Name: SDC_Cmdpath
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * SD card CMD pin driver. Manages command transmitting,
+ * response receiving, CRC generating and checking etc.
+ * 
+ * @author Yunye Pu
+ */
 module SDC_Cmdpath #(
 	parameter CMD_TIMEOUT_W = 16
 )(

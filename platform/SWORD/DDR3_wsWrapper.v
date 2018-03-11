@@ -1,23 +1,9 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 11/27/2016 08:17:26 PM
-// Design Name: 
-// Module Name: DDR3_wsWrapper
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Adapts the user interface of DDR3 MIG core to Wishbone slave interface.
+ * 
+ * @author Yunye Pu
+ */
 module DDR3_wsWrapper(
 	//input clkIn, 
 	input sysclk_p,
@@ -145,7 +131,7 @@ module DDR3_wsWrapper(
 	assign app_wdf_wren = (state == STATE_WRITE_DATA);
 	assign app_wdf_end = app_wdf_wren;
 	assign app_cmd = (state == STATE_WRITE_CMD)? MEM_WRITE: MEM_READ;
-	//	assign app_addr = {addr_reg, addrLow, 4'h0};
+//	assign app_addr = {addr_reg, addrLow, 4'h0};
 	assign app_addr = {1'b0, addr_reg, addrLow, 3'h0};//This might be an issue in the MIG core
 	
 	assign ws_dout = rdData;

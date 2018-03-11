@@ -1,23 +1,12 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 01/12/2018 05:36:52 PM
-// Design Name: 
-// Module Name: SDC_Registers
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Control register set of SD card controller. Accessible
+ * through a Wishbone slave interface; ack output is always
+ * high whenever stb and cyc inputs are high, so the Wishbone
+ * master can assume a non-blocking operation.
+ * 
+ * @author Yunye Pu
+ */
 module SDC_Registers #(
 	parameter BLKSIZE_W = 12,
 	parameter BLKCNT_W = 16,

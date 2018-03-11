@@ -1,23 +1,14 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 10/26/2016 10:30:43 AM
-// Design Name: 
-// Module Name: TranslatePredict
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Address translation prediction unit used in instruction address translation.
+ * The intention of this module is to break the critical path on instruction
+ * address translation, since address translation using TLB introduces high
+ * combinatorial delay.
+ * This module uses the result of previous address translation to predict the
+ * translated address of current instruction reference.
+ * 
+ * @author Yunye Pu
+ */
 module TranslatePredict(
 	input clk, input rst, input stall,
 	input [15:0] pageMask, input [31:0] pPCin,

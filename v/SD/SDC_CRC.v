@@ -1,23 +1,9 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 01/11/2018 03:22:19 AM
-// Design Name: 
-// Module Name: SDC_CRC
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * CRC modules used in CMD and DAT lines. CRC results are output serially.
+ * 
+ * @author Yunye Pu
+ */
 module SDC_CRC16(
 	input clk, input ce, input din,
 	input clr, output crc_out

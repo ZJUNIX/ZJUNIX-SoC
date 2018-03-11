@@ -1,23 +1,14 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 01/12/2018 10:17:53 PM
-// Design Name: 
-// Module Name: SDC_Clocking
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Clocking infrastructure for SD card controller.
+ * Provides a divided clock output, controller reset signal in divided clock domain,
+ * and clock domain crossing for various control/status signals in SD card controller.
+ * The divided clock is sourced by a BUFHCE primitive, a horizontal clock buffer,
+ * so all the logic driven by the divided clock should be in the same clock region,
+ * which means all SD card pins should be in the same I/O bank.
+ * 
+ * @author Yunye Pu
+ */
 module SDC_Clocking #(
 	parameter DIV_BITS = 8,
 	parameter CDC_WB_SD_W = 32,

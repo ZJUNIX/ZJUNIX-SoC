@@ -1,23 +1,11 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 10/19/2016 09:11:52 AM
-// Design Name: 
-// Module Name: Cp0
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Coprocessor 0, contains a set of control registers, interrupt generating logic,
+ * and some other logic.
+ * Directly interfaces to exception control module and TLB.
+ * 
+ * @author Yunye Pu
+ */
 module Cp0(
 	input clk, input rst,
 	input EX_flush,
@@ -106,8 +94,6 @@ module Cp0(
 	Cp0Reg #(.SOFTWARE_MASK(32'h0000001f), .RESET_STATE(0)) RegIndex(.clk(clk), .rst(rst),
 		.sDin(dataIn_reg), .sWe(cp0RegWe[0]), .hDin(regIndexDin), .hWe(regIndexWe), .dout(regIndex));
 	
-//	Cp0Reg #(.SOFTWARE_MASK(0), .RESET_STATE(32'h0000001f)) RegRandom(.clk(clk), .rst(rst),
-//		.sDin(dataIn_reg), .sWe(cp0RegWe[1]), .hDin(regRandomDin), .hWe(regRandomWe), .dout(regRandom));
 	assign regRandom = regRandomDin;
 	
 	Cp0Reg #(.SOFTWARE_MASK(32'h03ffffff), .RESET_STATE(0)) RegEntryLo0(.clk(clk), .rst(rst),
@@ -158,7 +144,6 @@ module Cp0(
 	Cp0Reg #(.SOFTWARE_MASK(32'hffffffff), .RESET_STATE(0)) RegErrorEPC(.clk(clk), .rst(rst),
 		.sDin(dataIn_reg), .sWe(cp0RegWe[30]), .hDin(32'h0), .hWe(32'h0), .dout(regErrorEPC));
 
-//	assign cp0RegWe = MEM_flush? 32'h0: cp0RegWe_reg;
 	assign cp0RegWe = cp0RegWe_reg;
 
 	//Config1 notes:
@@ -213,18 +198,6 @@ module Cp0(
 	assign regCauseDin[9:8] = 2'b0;
 	assign interrupt = |{interruptCapture, interruptMasked[1:0]} & (regStatus[2:0] == 3'b001);
 	
-	//Interrupt generate logic
-	//IP[7:2] sets on interrupt request, clears on eret.
-	//IP[1:0] clears on eret.
-//	wire [5:0] interruptReq_;
-//	assign interruptReq_[4:0] = interruptReq;
-//	assign interruptReq_[5] = (regCount == regCompare);
-//	assign regCauseWe[15:10] = {6{eret}} | (interruptReq_ & regStatus[15:10]);
-//	assign regCauseWe[9:8] = {2{eret}};
-//	assign regCauseDin[15:10] = eret? 6'h0: interruptReq_;
-//	assign regCauseDin[9:8] = 2'b0;
-//	assign interrupt = |(regCause[15:8] & regStatus[15:8]) & (regStatus[2:0] == 3'b001);
-
 	assign userMode = regStatus[`UM] & ~regStatus[`EXL] & ~regStatus[`ERL];
 	assign statusEXL = regStatus[`EXL];
 	assign statusERL = regStatus[`ERL];

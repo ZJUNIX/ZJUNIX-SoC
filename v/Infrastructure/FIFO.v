@@ -1,5 +1,10 @@
 `timescale 1ns / 1ps
-
+/**
+ * Simple FIFO module with AXI-Stream interface and supports asynchronous clocking.
+ * Packet mode is not supported.
+ * 
+ * @author Yunye Pu
+ */
 module AxisFifo #(
 	parameter WIDTH = 8,
 	parameter DEPTH_BITS = 7,

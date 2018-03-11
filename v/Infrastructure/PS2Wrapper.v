@@ -1,23 +1,10 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 11/22/2016 04:57:20 PM
-// Design Name: 
-// Module Name: PS2Wrapper
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Intergrates the PS/2 driver and receive & transmit buffers
+ * to form a port attachable to SoC bus.
+ * 
+ * @author Yunye Pu
+ */
 module PS2Wrapper #(
 	parameter FIFO_DEPTH = 5,
 	parameter PARITY = "ODD"

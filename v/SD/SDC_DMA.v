@@ -1,23 +1,9 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 01/07/2018 01:26:06 AM
-// Design Name: 
-// Module Name: SDC_DMA
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * DMA controller for adapting stream interface to Wishbone master interface.
+ * 
+ * @author Yunye Pu
+ */
 module SDC_DMA (
 	input wb_clk, input wb_rst,
 	input sd_clk, input sd_rst,

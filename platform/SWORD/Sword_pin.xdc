@@ -8,7 +8,6 @@ set_property -dict {PACKAGE_PIN R18 IOSTANDARD LVCMOS33} [get_ports {seg_sout[0]
 
 set_property -dict {PACKAGE_PIN N26 IOSTANDARD LVCMOS33} [get_ports {led_sout[1]}]
 set_property -dict {PACKAGE_PIN M26 IOSTANDARD LVCMOS33} [get_ports {led_sout[0]}]
-#set_property -dict {PACKAGE_PIN R25 IOSTANDARD LVCMOS33} [get_ports {led_oe}]
 
 set_property -dict {PACKAGE_PIN AA22 IOSTANDARD LVCMOS33} [get_ports {segment[7]}]
 set_property -dict {PACKAGE_PIN AC23 IOSTANDARD LVCMOS33} [get_ports {segment[6]}]

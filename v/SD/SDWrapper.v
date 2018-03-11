@@ -1,23 +1,10 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 11/23/2016 10:41:51 AM
-// Design Name: 
-// Module Name: SDWrapper
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Intergrates the SD card controller and a buffer to eliminate Wishbone master interface
+ * and form a port attachable to SoC bus.
+ * 
+ * @author Yunye Pu
+ */
 module SDWrapper(
 	input clkCPU, input clkSD, input globlRst,
 	
@@ -51,19 +38,6 @@ module SDWrapper(
 	wire [31:0] ctrlDataOut;
 	
 	//SD controller
-//	sdc_controller sd(.wb_clk_i(clkCPU), .wb_rst_i(globlRst),
-//		.wb_dat_i(dataInBus), .wb_dat_o(dataOut_ctrl), .wb_adr_i({addrBus[7:2], 2'b0}),
-//		.wb_sel_i(weBus), .wb_we_i(|weBus), .wb_cyc_i(en_ctrl), .wb_stb_i(en_ctrl), .wb_ack_o(),
-		
-//		.m_wb_dat_o(ws_buf_din), .m_wb_dat_i(ws_buf_dout),  .m_wb_adr_o(ws_buf_addr),
-//		.m_wb_sel_o(ws_buf_dm), .m_wb_we_o(ws_buf_we), .m_wb_cyc_o(ws_buf_cyc), .m_wb_stb_o(ws_buf_stb),
-//		.m_wb_ack_i(ws_buf_ack), .m_wb_cti_o(), .m_wb_bte_o(),
-		
-//		.sd_dat_dat_i(sd_dat), .sd_dat_out_o(sd_dat_internal), .sd_dat_oe_o(sd_dat_oe),
-//		.sd_cmd_dat_i(sd_cmd), .sd_cmd_out_o(sd_cmd_internal), .sd_cmd_oe_o(sd_cmd_oe),
-//		.sd_clk_i_pad(clkSD), .sd_clk_o_pad(sd_clk_internal),
-		
-//		.int_cmd(intCmd), .int_data(intDat));
 	SDController sd(.wb_clk(clkCPU), .wb_rst(globlRst), .sd_clk(clkSD), .sd_rst(globlRst),
 		.wb_addr({addrBus[7:2], 2'b0}), .wb_din(dataInBus), .wb_dout(ctrlDataOut),
 		.wb_dm(weBus), .wb_cyc(en_ctrl), .wb_stb(en_ctrl), .wb_we(|weBus), .wb_ack(),

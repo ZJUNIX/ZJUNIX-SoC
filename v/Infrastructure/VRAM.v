@@ -1,23 +1,10 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2017/01/26 21:12:10
-// Design Name: 
-// Module Name: VRAM
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Character mode VRAM and character generator ROM.
+ * VRAM size is 128x32 characters; character size is 8x16 pixels.
+ * 
+ * @author Yunye Pu
+ */
 module CharROM(
 	input clk,
 	input [7:0] ascii, input [2:0] x, input [3:0] y,

@@ -1,23 +1,11 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 11/22/2016 04:08:54 PM
-// Design Name: 
-// Module Name: Infrastructure_Sword
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * SoC infrastructure for SWORD4 platform.
+ * Contains clocking and reset logic and basic I/O, including
+ * LED, 7-seg display, slide switches, button pad, PS/2 and UART.
+ * 
+ * @author Yunye Pu
+ */
 module Infrastructure_Sword #(
 	parameter DEBUG = 1'b0,
 	parameter PS2 = 1'b1,

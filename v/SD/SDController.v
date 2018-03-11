@@ -1,23 +1,9 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 01/13/2018 12:51:38 AM
-// Design Name: 
-// Module Name: SDController
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * The top module of SD card controller.
+ * 
+ * @author Yunye Pu
+ */
 module SDController(
 	//Clock and reset
 	input wb_clk, input wb_rst,

@@ -1,23 +1,10 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 11/23/2016 02:16:21 PM
-// Design Name: 
-// Module Name: CPUBus
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Data bus decoder and multiplexer. Since data bus has a single master(the CPU), 
+ * simple decoding and multiplexing logic is sufficient.
+ * 
+ * @author Yunye Pu
+ */
 module CPUBus(
 	input clk, input rst,
 	//CPU bus

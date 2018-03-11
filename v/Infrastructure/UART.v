@@ -1,23 +1,9 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    14:19:34 08/05/2016 
-// Design Name: 
-// Module Name:    UART 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * UART transceiver with configurable baud rate.
+ * 
+ * @author Yunye Pu
+ */
 module UART_TX #(
 	parameter COUNTER_MSB = 9
 )(

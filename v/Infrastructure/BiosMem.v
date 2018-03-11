@@ -1,23 +1,9 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2017/01/26 21:47:51
-// Design Name: 
-// Module Name: BiosMem
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: A UART-reprogrammable memory, size = 16KiB(4096 words)
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * The RAM storing the bootloader. Can be reprogrammed via UART.
+ * 
+ * @author Yunye Pu
+ */
 module BiosMem(
 	input clka, input [11:0] addra, input [31:0] dina,
 	input [3:0] wea, input ena, output reg [31:0] douta,

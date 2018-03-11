@@ -1,23 +1,11 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    19:39:13 06/29/2016 
-// Design Name: 
-// Module Name:    VGADevice 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * VGA driver with character mode and graphics mode. Graphics mode can be disabled
+ * (excluded from synthesis & implementation) by setting the parameter to 0.
+ * Contains a hardware cursor in character mode.
+ * 
+ * @author Yunye Pu
+ */
 module VGADevice #(
 	parameter GRAPHIC_VRAM = 1
 )(

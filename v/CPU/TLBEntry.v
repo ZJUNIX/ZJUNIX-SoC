@@ -1,23 +1,10 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2016/09/26 15:13:55
-// Design Name: 
-// Module Name: TLBEntry
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * TLB entry pool, stores complete TLB entries(for read back).
+ * Provides PFN and pagemask when used in address translation.
+ * 
+ * @author Yunye Pu
+ */
 `include "TLBDefines.vh"
 
 module TLBEntry(input clk, input we,

@@ -1,23 +1,9 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    15:17:24 05/07/2016 
-// Design Name: 
-// Module Name:    BranchPredictor 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * A simple 2-bit dynamic branch predictor.
+ * 
+ * @author Yunye Pu
+ */
 module BranchPredictor(
 	input clk, input rst, input stall, input [31:0] PC, input [31:0] branchDest,
 	input ID_branchCond, input EX_branchCond, input branchTaken, input exc_flush,
@@ -77,9 +63,6 @@ module BranchPredictor(
 	end
 	
 	assign prediction = recRead[1];
-	
-//	RAM_BP recBuffer(.clka(clk), .addra(PCbuf1), .dina(recWrite), .wea(branchCond_buf),
-//		.clkb(clk), .addrb(PC[14:2]), .doutb(recRead));
 	
 	reg [1:0] recBuffer[8191:0];
 	reg [1:0] _recRead;

@@ -1,23 +1,10 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    21:38:08 05/03/2016 
-// Design Name: 
-// Module Name:    PCPU
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Main module of CPU.
+ * TLB-based MMU and coprocessor 0 are included in this module.
+ * 
+ * @author Yunye Pu
+ */
 module PCPU #(
 	parameter PERIOD = 10
 )(
@@ -42,7 +29,6 @@ module PCPU #(
 	//Note: a stall within a stage should stall all the stages before it,
 	//and flush the stage right after it.
 	//A flush to a stage should stall all stages before it.
-//	wire masterStall = iStall | dStall;
 	wire ID_excFlush, EX_excFlush, MEM_excFlush;
 	wire MEM_excFlush_unmapped;
 	wire [4:0] INT_sync;
@@ -150,14 +136,6 @@ module PCPU #(
 			IF_PC <= PC_exc;
 		else if(BP_flushOut | !IF_stall)
 			IF_PC <= PC_BP;
-		
-//		else if(~masterStall)
-//		begin
-//			if(excReq)
-//				IF_PC <= PC_exc;
-//			else if(~IF_stall)
-//				IF_PC <= PC_BP;
-//		end
 	end
 	
 	//ID stage logic
@@ -296,8 +274,6 @@ module PCPU #(
 	assign memWE = EX_memW_1b;
 	assign stbIBusMapped = mappedIBus;
 	assign stbIBus = ~mappedIBus;
-//	assign stbIBusMapped = 1'b1;
-//	assign stbIBus = 1'b1;
 	
 	//Others
 	//Interrupt signal sync logic: rising edge trigger

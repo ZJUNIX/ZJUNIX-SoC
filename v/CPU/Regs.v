@@ -1,23 +1,9 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    21:15:31 03/29/2016 
-// Design Name: 
-// Module Name:    Regs 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * 4-port register file implemented using RAM32M distributed memory primitive.
+ * 
+ * @author Yunye Pu
+ */
 module RegFile(
 	input clk, input rst, input stall,
 	input [4:0] rsAddr, input [4:0] rtAddr, input [4:0] rdAddr, input [4:0] rtAddrDelay,

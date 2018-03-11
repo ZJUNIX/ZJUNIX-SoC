@@ -1,23 +1,11 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    15:32:48 03/04/2016 
-// Design Name: 
-// Module Name:    ShiftReg 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Parallel-in, serial-out shift register used to drive 7-seg display and LEDs on SWORD platform.
+ * Configurable input width, shift interval(parameter DELAY), shift direction,
+ * and display duty cycle(parameter ONTIME).
+ * 
+ * @author Yunye Pu
+ */
 module ShiftReg #(
 	parameter WIDTH = 16,
 	parameter DELAY = 12,
@@ -36,9 +24,7 @@ module ShiftReg #(
 	reg [DELAY-1:0] counter = -1;
 	wire sckEn;
 	
-//	assign sckEn = DIRECTION? |shift[WIDTH-1:0]: |shift[WIDTH:1];
 	assign sckEn = |shift;
-//	assign sck = ~clk & sckEn;
 	ODDR #(
 		.INIT(1'b0)
 	) sr_clk_fwd (
@@ -50,7 +36,6 @@ module ShiftReg #(
 		.R(1'b0),
 		.S(1'b0)
 	);
-//	assign sdat = DIRECTION? shift[WIDTH]: shift[0];
 	
 	always @ (posedge clk)
 	begin

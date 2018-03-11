@@ -1,23 +1,9 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 11/23/2016 07:21:03 PM
-// Design Name: 
-// Module Name: Top
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * The top module of SoC project.
+ * 
+ * @auther Yunye Pu
+ */
 module Top(
 //	input clk, 
 	input rstn,
@@ -141,10 +127,8 @@ module Top(
 		.clkProg(clk_100M), .uartRx(uartRx), .progEN(globlRst));
 	
 	DDR3_wsWrapper ddr3(
-	//.clkIn(clk), 
-	.sysclk_p(sysclk_p),
-	.sysclk_n(sysclk_n),
-	.clkOut(clkDDR), .rst(globlRst),
+		.sysclk_p(sysclk_p), .sysclk_n(sysclk_n),
+		.clkOut(clkDDR), .rst(globlRst),
 		.ws_addr(addrDDR), .ws_din(doutDDR), .ws_dm(dmDDR),
 		.ws_cyc(cycDDR), .ws_stb(stbDDR), .ws_we(weDDR),
 		.ws_dout(dinDDR), .ws_ack(ackDDR),
@@ -168,37 +152,6 @@ module Top(
 		.ddr3_odt(ddr3_odt)
 	);
 
-//	assign dbg_ddrState = 3'h0;
-//	assign clkDDR = clk;
-	
-//Internal memory debug code
-//	reg [11:0] addrDDR_prev;
-//	always @ (posedge clkDDR)
-//		addrDDR_prev <= addrDDR[16:5];
-//	assign ackDDR = cycDDR & stbDDR & (weDDR | (addrDDR[16:5] == addrDDR_prev));
-//	BRAM_SINGLE_MACRO #(
-//		.BRAM_SIZE("36Kb"),
-//		.DEVICE("7SERIES"),
-//		.DO_REG(0),
-//		.INIT(36'h000000000),
-//		.INIT_FILE ("NONE"),
-//		.WRITE_WIDTH(8),
-//		.READ_WIDTH(8),
-//		.SRVAL(36'h000000000),
-//		.WRITE_MODE("WRITE_FIRST")
-//	) mainMem[31:0] (
-//		.DO(dinDDR),
-//		.ADDR(addrDDR[16:5]),
-//		.CLK(clkDDR),
-//		.DI(doutDDR),
-//		.EN(stbDDR & cycDDR),
-//		.REGCE(1'b0),
-//		.RST(1'b0),
-//		.WE(weDDR)
-//	);
-	
-//	dbgModule dbg(.clk(clk_100M), .probe0(ps2Clk), .probe1(ps2Dat));
-	
 	assign buzzer = 1'b1;
 
 endmodule

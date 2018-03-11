@@ -1,23 +1,11 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 11/01/2016 10:57:27 AM
-// Design Name: 
-// Module Name: ExcControl
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * This module gathers various exception signals from CPU,
+ * and informs coprocessor 0 and CPU pipeline whenever normal
+ * execution flow should be changed.
+ * 
+ * @author Yunye Pu
+ */
 module ExcControl(input clk, input rst, 
 	//IF stage exceptions
 	input adErrI, input TLBMissI, input TLBInvalidI,
@@ -28,10 +16,10 @@ module ExcControl(input clk, input rst,
 	input TLBMissD, input TLBInvalidD, input TLBModD,
 	input eret, input interrupt,
 	//Pipeline flush signals to supress exceptions
-	input [2:0] pipelineFlush,//{ID_flush, EX_flush, MEM_flush}
+	input [2:0] pipelineFlush,
 	//PC and BD
-	input [31:0] ID_PC, input [31:0] EX_PC,// input [31:0] Mem_PC,
-	input ID_BD, input EX_BD, input IF_BD,// input Mem_BD,
+	input [31:0] ID_PC, input [31:0] EX_PC,
+	input ID_BD, input EX_BD, input IF_BD,
 	//Output to CPU pipeline
 	output ID_excFlush, output EX_excFlush, output Mem_excFlush,
 	output [31:0] excPC, output useExcPC, output Mem_excFlush_unmapped,
@@ -130,25 +118,22 @@ module ExcControl(input clk, input rst,
 	
 	always @ (posedge clk)
 	begin
-//		if(~stall)
-//		begin
-			//AdEL(I), TLBInvalidI, TLBMissI, RI, Bp, Sys, cpU, Ov, Tr, AdEL, AdES, TLBMissDL, TLBMissDS, Mod, TLBInvalidDL, TLBInvalidDS, Int
-			excSignalReg[16] <= adErrI;
-			excSignalReg[15] <= TLBInvalidI;
-			excSignalReg[14] <= TLBMissI;
-			excSignalReg[13:6] <= {RI, breakpoint, syscall, cpU, overflow, trap, adEL, adES};
-			excSignalReg[5] <= TLBMissD & ~memWrite;
-			excSignalReg[4] <= TLBMissD & memWrite;
-			excSignalReg[3] <= TLBModD;
-			excSignalReg[2] <= TLBInvalidD & ~memWrite;
-			excSignalReg[1] <= TLBInvalidD & memWrite;
-			excSignalReg[0] <= interrupt;
-			IF_PC_reg <= {IF_BD, IF_BD? ID_PC: IF_PC};
-			ID_PC_reg <= {ID_BD, ID_PC};
-			EX_PC_reg <= {EX_BD, EX_PC};
-			IF_VAddr <= IF_PC;
-			memVAddr_reg <= memVAddr;
-//		end
+		//AdEL(I), TLBInvalidI, TLBMissI, RI, Bp, Sys, cpU, Ov, Tr, AdEL, AdES, TLBMissDL, TLBMissDS, Mod, TLBInvalidDL, TLBInvalidDS, Int
+		excSignalReg[16] <= adErrI;
+		excSignalReg[15] <= TLBInvalidI;
+		excSignalReg[14] <= TLBMissI;
+		excSignalReg[13:6] <= {RI, breakpoint, syscall, cpU, overflow, trap, adEL, adES};
+		excSignalReg[5] <= TLBMissD & ~memWrite;
+		excSignalReg[4] <= TLBMissD & memWrite;
+		excSignalReg[3] <= TLBModD;
+		excSignalReg[2] <= TLBInvalidD & ~memWrite;
+		excSignalReg[1] <= TLBInvalidD & memWrite;
+		excSignalReg[0] <= interrupt;
+		IF_PC_reg <= {IF_BD, IF_BD? ID_PC: IF_PC};
+		ID_PC_reg <= {ID_BD, ID_PC};
+		EX_PC_reg <= {EX_BD, EX_PC};
+		IF_VAddr <= IF_PC;
+		memVAddr_reg <= memVAddr;
 	end
 	
 	assign regEPCOut = EPC_[31:0];

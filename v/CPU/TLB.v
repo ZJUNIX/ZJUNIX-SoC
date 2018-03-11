@@ -1,23 +1,18 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2016/09/26 17:08:48
-// Design Name: 
-// Module Name: TLB
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Translation look-aside buffer, designed to be mostly compliant with MIPS32 specifications.
+ * 
+ * Note: VIOLATION OF MIPS32 SPECIFICATION:
+ * 1. Odd numbers of 1 bits in PageMask are also valid encoding(0x0001, 0x0007, etc),
+ *    resulting in 17 possible page sizes(instead of 9).
+ * 
+ * Note: Implementation specific limitations
+ * 1. Consecutive TLBWR or TLBWI instructions will put the contents in TLB into an
+ *    unpredictable state. TLB write instructions should be separated by at least
+ *    one instruction apart. TLBR or TLBP instructions do not have this restriction.
+ * 
+ * @author Yunye Pu
+ */
 `include "TLBDefines.vh"
 
 module TLB(input clk, input rst, input statusERL,
@@ -41,14 +36,6 @@ module TLB(input clk, input rst, input statusERL,
 	input [4:0] regWired, output [4:0] regRandom,
 	input regWiredWrite, input [1:0] op//00=normal, 01=TLBR, 10=TLBWI, 11=TLBWR; TLBP and TLBR are always enabled
 );
-//Note: VIOLATION OF MIPS32 SPECIFICATION:
-//1. Odd numbers of 1 bits in PageMask are also valid encoding(0x0001, 0x0007, etc),
-//   resulting in 17 possible page sizes(instead of 9).
-
-//Note: Implementation specific limitations
-//1. Consecutive TLBWR or TLBWI instructions will put the contents in TLB into an
-//   unpredictable state. TLB write instructions should be separated by at least
-//   one instruction apart. TLBR or TLBP instructions do not have this restriction.
 
 	wire [43:0] dataInHeader;
 	wire [49:0] dataInEntry;

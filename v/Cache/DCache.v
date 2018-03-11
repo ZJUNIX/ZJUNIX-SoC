@@ -1,23 +1,12 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2017/02/01 19:16:04
-// Design Name: 
-// Module Name: DCache
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Data cache, 2-way set associative, 64-byte line size, 512 sets per way, total 64KB.
+ * No allocate on write miss combined with writeback, improves cache performance on cache
+ * misses.
+ * A 'hit writeback' operation is available to CPU.
+ * 
+ * @author Yunye Pu
+ */
 module DCache #(
 	parameter CLKCPU_PERIOD = 10,
 	parameter CLKDDR_PERIOD = 5

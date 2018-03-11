@@ -1,23 +1,10 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 01/11/2018 06:49:24 PM
-// Design Name: 
-// Module Name: SDC_Datapath
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Main module on SD controller data path. Drives DAT pins
+ * and provides a Wishbone master interface for data movement.
+ * 
+ * @author Yunye Pu
+ */
 module SDC_Datapath #(
 	parameter BLKSIZE_W = 12,
 	parameter BLKCNT_W = 16,

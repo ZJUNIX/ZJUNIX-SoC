@@ -1,23 +1,10 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 01/07/2018 02:53:58 AM
-// Design Name: 
-// Module Name: SDC_TxDownscaler
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * 4-byte to 1-byte downscaler on SD data transmitting path.
+ * Also breaks data stream into packets(tx_last_out signal).
+ * 
+ * @author Yunye Pu
+ */
 module SDC_TxDownscaler #(
 	parameter BLKSIZE_W = 12,
 	parameter BLKCNT_W = 16

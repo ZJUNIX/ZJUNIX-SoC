@@ -1,23 +1,13 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    17:04:01 05/04/2016 
-// Design Name: 
-// Module Name:    MulDiv 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * Multiplier and divider.
+ * The multipler is implemented using the * operator, allowing utilization
+ * of DSP elements in FPGA and achieving single-cycle operation.
+ * The divider is implemented using radix-2 algorithm, so it has a latency of
+ * 32 cycles.
+ * 
+ * @author Yunye Pu
+ */
 module MulDiv(
 	input clk, input rst,
 	input [31:0] A, input [31:0] B, input [3:0] op,

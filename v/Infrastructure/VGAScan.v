@@ -1,23 +1,11 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    16:09:41 11/26/2015 
-// Design Name: 
-// Module Name:    VGAScan 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * VGA scanning module. 640x480@59.94Hz; 59.5238Hz in practice since
+ * it is difficult to generate a 25.175MHz clock. Input clock runs at 25MHz.
+ * Color depth is 4 bits for each channel.
+ * 
+ * @author Yunye Pu
+ */
 module VGAScan(
 	input clk, input [11:0] videoIn,
 	output [9:0] HAddr, output [8:0] VAddr,	output reg frameStart,
@@ -43,13 +31,9 @@ localparam VEND = 10'd515 + VCALIBRATE;
 
 	assign HActive = (HCount >= HSTART && HCount < HEND);
 	assign VActive = (VCount >= VSTART && VCount < VEND);
-//	assign HSync = (HCount >= 10'd96);
-//	assign VSync = (VCount >= 10'd2);
 	assign _HAddr = HCount - HSTART;
 	assign _VAddr = VCount - VSTART;
 
-//	assign HAddr = (HActive && VActive)? _HAddr: 10'h0;
-//	assign VAddr = VActive? _VAddr[8:0]: 9'h0;
 	assign HAddr = _HAddr;
 	assign VAddr = _VAddr[8:0];
 

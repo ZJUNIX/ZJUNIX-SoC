@@ -1,23 +1,11 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 01/11/2018 05:37:53 PM
-// Design Name: 
-// Module Name: SDC_DataReceiver
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * SD data receiver. Supports both 1-bit and 4-bit SD bus mode.
+ * CRC is checked and removed from data frames.
+ * Data output is 8-bit wide, to minimize efforts on data alignment.
+ * 
+ * @author Yunye Pu
+ */
 module SDC_DataReceiver #(
 	parameter BLKSIZE_W = 12
 )(

@@ -1,23 +1,12 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 07/05/2016 12:26:15 AM
-// Design Name: 
-// Module Name: Seg7Device
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+/**
+ * 7-seg display driver. Provides serial output to drive a 8-digit display
+ * in hexadecimal digits, and parallel(scanning) output to drive a 4-digit
+ * display in pattern mode. The anode output to the 4-digit display is encoded,
+ * since the 4-digit display includes a decoder.
+ * 
+ * @author Yunye Pu
+ */
 module Seg7Device(
 	input clkIO, input [1:0] clkScan, input clkBlink,
 	input [31:0] data, input [7:0] point, input [7:0] LES,
