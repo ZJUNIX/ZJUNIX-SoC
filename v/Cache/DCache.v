@@ -5,6 +5,26 @@
  * misses.
  * A 'hit writeback' operation is available to CPU.
  * 
+ * DRAM-side port is upscaled by interleaving two way data. Due to limits in RAM port width,
+ * we can read/write at most 8 words(half a set) in a bank in one clock cycle.
+ * This is how data is normally stored:
+ * |          ...           |  |          ...           |
+ * | way 0, set 1, word 8-15|  | way 1, set 1, word 8-15|
+ * | way 0, set 1, word 0-7 |  | way 1, set 1, word 0-7 |
+ * | way 0, set 0, word 8-15|  | way 1, set 0, word 8-15|
+ * | way 0, set 0, word 0-7 |  | way 1, set 0, word 0-7 |
+ * --------------------------  --------------------------
+ * In this configuration, it takes at least two clock cycles to read/write a single set.
+ * This is how data is stored after interleaving:
+ * |          ...           |  |          ...           |
+ * | way 1, set 1, word 8-15|  | way 0, set 1, word 8-15|
+ * | way 0, set 1, word 0-7 |  | way 1, set 1, word 0-7 |
+ * | way 1, set 0, word 8-15|  | way 0, set 0, word 8-15|
+ * | way 0, set 0, word 0-7 |  | way 1, set 0, word 0-7 |
+ * --------------------------  --------------------------
+ * Note that way 0 and way 1 alternates inside each bank, so we can read/write the whole
+ * set in one clock cycle if we provide appropriate addresses for each bank.
+ * 
  * @author Yunye Pu
  */
 module DCache #(
@@ -23,8 +43,8 @@ module DCache #(
 	wire [31:0] douta0, douta1;
 	wire [1:0] writeReject;
 	wire [9:0] addrb;
-	wire [255:0] dinb, doutb0, doutb1;
-	wire [31:0] dirtyb0, dirtyb1;
+	wire [511:0] dinb, doutb;
+	wire [63:0] dirtyb;
 	wire dataOp;
 	wire waySelA, waySelB;
 	wire web;
@@ -38,16 +58,16 @@ module DCache #(
 	wire [16:0] newTag_CPU, newTag_DDR;
 	
 	DCacheData way0Data(
-		.addra(addrIn[14:2]), .clka(clkCPU), .dina(dataIn), .douta(douta0), .ena(~dStall),
-		.wea(dm), .readReq(req & ~we), .writeReject(writeReject[0]),
-		.addrb(addrb), .clkb(clkDDR), .dinb(dinb), .op(dataOp), .doutb(doutb0),
-		.enb(1'b1), .web(web & ~waySelB), .dirtyb(dirtyb0));
+		.addra(addrIn[14:2]), .clka(clkCPU), .ena(~dStall), .wea(dm),
+		.dina(dataIn), .douta(douta0), .readReq(req & ~we), .writeReject(writeReject[0]),
+		.addrb({addrb[8:0], addrb[9]}), .clkb(clkDDR), .enb(1'b1), .web(web), .op(dataOp),
+		.dinb(dinb[255:  0]), .doutb(doutb[255:  0]), .dirtyb(dirtyb[31: 0]));
 	DCacheData way1Data(
-		.addra(addrIn[14:2]), .clka(clkCPU), .dina(dataIn), .douta(douta1), .ena(~dStall),
-		.wea(dm), .readReq(req & ~we), .writeReject(writeReject[1]),
-		.addrb(addrb), .clkb(clkDDR), .dinb(dinb), .op(dataOp), .doutb(doutb1),
-		.enb(1'b1), .web(web & waySelB), .dirtyb(dirtyb1));
-	
+		.addra(addrIn[14:2]), .clka(clkCPU), .ena(~dStall), .wea(dm),
+		.dina(dataIn), .douta(douta1), .readReq(req & ~we), .writeReject(writeReject[1]),
+		.addrb({addrb[8:0],~addrb[9]}), .clkb(clkDDR), .enb(1'b1), .web(web), .op(dataOp),
+		.dinb(dinb[511:256]), .doutb(doutb[511:256]), .dirtyb(dirtyb[63:32]));
+
 	DCacheFSM_CPU FSM0(.clk(clkCPU), .rst(rstCPU),
 		.addrIn(addrIn), .req(req), .write(we),
 		.dataOut(dataOut), .stall(dStall), .invalidateReq(invalidate),
@@ -59,8 +79,8 @@ module DCache #(
 	DCacheFSM_DDR FSM1(.clk(clkDDR), .rst(rstDDR),
 		.ws_addr(ws_addr), .ws_dout(ws_dout), .ws_dm(ws_dm),
 		.ws_din(ws_din), .ws_cyc(ws_cyc), .ws_stb(ws_stb), .ws_we(ws_we), .ws_ack(ws_ack),
-		.addrb(addrb), .dinb(dinb), .dataOp(dataOp), .doutb(waySelB? doutb1: doutb0),
-		.web(web), .dirtyb(waySelB? dirtyb1: dirtyb0), .waySel(waySelB),
+		.addrb(addrb), .dinb(dinb), .dataOp(dataOp), .doutb(doutb),
+		.web(web), .dirtyb(dirtyb),
 		.replaceStb(replaceStb_DDR), .replaceType(replaceType_DDR), .replaceAck(replaceAck_DDR),
 		.completeStb(completeStb_DDR), .replaceIndex(replaceIndex_DDR),
 		.oldTag(oldTag_DDR), .newTag(newTag_DDR));
@@ -96,6 +116,7 @@ module DCacheFSM_CPU(
 	reg req_reg = 0;
 	reg write_reg = 0;
 	reg invalidateReq_reg = 0;
+	reg wayInterleave = 0;
 		
 	wire [17:0] tag0, tag1;
 	wire LRUBit;
@@ -108,7 +129,7 @@ module DCacheFSM_CPU(
 	wire invalidHit1 = (tag1[16:0] == requestedTag);
 	wire hit0 = invalidHit0 & (write_reg | tag0[17]);
 	wire hit1 = invalidHit1 & (write_reg | tag1[17]);
-	assign dataOut = hit1? douta1: douta0;
+	assign dataOut = (hit1 ^ wayInterleave)? douta1: douta0;
 	
 	reg [8:0] tagAddr = 0;
 	
@@ -116,8 +137,10 @@ module DCacheFSM_CPU(
 		.addra(tagWSel? tagAddr: addrIn[14:6]), .dina(tagDin), .douta({tag1, tag0}));
 	CacheLRUBit cacheLRU(.clk(clk), .req(req_reg), .addr(tagAddr), .hit({hit1, hit0}), .flag(LRUBit));
 	
-	assign writeReject[0] = ~invalidHit0 & write_reg;
-	assign writeReject[1] = ~invalidHit1 & write_reg;
+	wire [1:0] _writeReject;
+	assign _writeReject[0] = ~invalidHit0 & write_reg;
+	assign _writeReject[1] = ~invalidHit1 & write_reg;
+	assign writeReject = wayInterleave? {_writeReject[0], _writeReject[1]}: _writeReject;
 	
 	localparam STATE_IDLE = 2'h0;
 	localparam STATE_WAIT = 2'h1;
@@ -134,12 +157,14 @@ module DCacheFSM_CPU(
 	begin
 		tagAddr <= tagAddr + 1'b1;
 		requestedTag <= 17'h0;
+		wayInterleave <= 1'b0;
 		req_reg <= 1'b0;
 		write_reg <= 1'b0;
 	end
 	else if(~stall)
 	begin
 		tagAddr <= addrIn[14:6];
+		wayInterleave <= addrIn[5];
 		requestedTag <= addrIn[31:15];
 		req_reg <= req;
 		write_reg <= write;
@@ -189,7 +214,7 @@ module DCacheFSM_CPU(
 	end
 	STATE_INVALIDATE: begin
 		tagDin <= {tag1, tag0};
-		tagWe <= 2'b11;
+		tagWe <= 2'b00;
 	end
 	STATE_IDLE: begin
 		tagWe <= {2{rst}};
@@ -206,39 +231,32 @@ endmodule
 module DCacheFSM_DDR(
 	input clk, input rst,
 	//Wishbone master interface
-	output [31:0] ws_addr, output [511:0] ws_dout, output [63:0] ws_dm,
+	output [31:0] ws_addr, output reg [511:0] ws_dout, output reg [63:0] ws_dm,
 	input [511:0] ws_din, output reg ws_cyc = 0, output ws_stb, output ws_we, input ws_ack,
 	//Cache data interface
-	output [9:0] addrb, output reg [255:0] dinb, output dataOp, input [255:0] doutb,
-	output reg web, input [31:0] dirtyb, output waySel,
+	output [9:0] addrb, output dataOp, output reg web,
+	output reg [511:0] dinb, input [511:0] doutb, input [63:0] dirtyb,
 	//Interface to CPU FSM
 	input replaceStb, input replaceType, output reg replaceAck, output reg completeStb = 0,
 	input [9:0] replaceIndex, input [16:0] oldTag, input [16:0] newTag
 );
 	//replace0=writeback only, 1=writeback & read
 
-	reg [9:0] replaceIndex_reg;
 	reg [16:0] newTag_reg;
 	reg writeBack, readIn;
-	reg [26:0] addr = 0;
-	assign ws_addr = {addr[26:1], 6'h0};
-	assign addrb = addr[9:0];
-	assign waySel = replaceIndex_reg[9];
+	reg [25:0] addr = 0;
+	reg waySel = 0;
+	assign ws_addr = {addr, 6'h0};
+	assign addrb = {waySel, addr[8:0]};
 	
-	reg [255:0] dataOutReg0, dataOutReg1, dataInReg;
-	reg [31:0] dataMaskReg0, dataMaskReg1;
-	reg [1:0] dirtyReg;
-	
-	wire blockDirty = |dirtyReg;
-	assign ws_dout = {dataOutReg0, dataOutReg1};
-	assign ws_dm = {dataMaskReg0, dataMaskReg1};
+	reg blockDirty;
 	
 	localparam STATE_IDLE = 3'h0;
 	localparam STATE_MEM_READ = 3'h1;
 	localparam STATE_MEM_READ_END = 3'h2;
 	localparam STATE_WS_PREP = 3'h3;
 	localparam STATE_WS_READ = 3'h4;
-	localparam STATE_MEM_WRITE = 3'h5;
+//	localparam STATE_MEM_WRITE = 3'h5;
 	localparam STATE_MEM_WRITE_END = 3'h6;
 	localparam STATE_WS_WRITE = 3'h7;
 	reg [2:0] state;
@@ -261,11 +279,11 @@ module DCacheFSM_DDR(
 	STATE_IDLE: begin
 		if(replaceStb)
 		begin
-			replaceIndex_reg <= replaceIndex;
+			waySel <= replaceIndex[9];
 			readIn <= replaceType;
 			writeBack <= (oldTag != newTag);
 			newTag_reg <= oldTag ^ newTag;
-			addr <= {oldTag, replaceIndex[8:0], 1'b0};
+			addr <= {oldTag, replaceIndex[8:0]};
 			if(replaceType & (oldTag == newTag))
 			begin
 				state <= STATE_WS_READ;
@@ -282,19 +300,11 @@ module DCacheFSM_DDR(
 	end
 	STATE_MEM_READ_END: begin
 		web <= 1'b0;
-		addr[0] <= ~addr[0];
-		dataOutReg1 <= dataOutReg0;
-		dataOutReg0 <= doutb;
-		dataMaskReg1 <= dataMaskReg0;
-		dataMaskReg0 <= dirtyb;
-		dirtyReg <= {dirtyReg[0], |dirtyb};
-		if(addr[0])
-		begin
-			state <= STATE_WS_PREP;
-			replaceAck <= 1'b1;
-		end
-		else
-			state <= STATE_MEM_READ;
+		ws_dout <= waySel? {doutb[255:0], doutb[511:256]}: doutb;
+		ws_dm <= waySel? {dirtyb[31:0], dirtyb[63:32]}: dirtyb;
+		blockDirty <= |dirtyb;
+		state <= STATE_WS_PREP;
+		replaceAck <= 1'b1;
 	end
 	STATE_WS_PREP: begin
 		writeBack <= writeBack & blockDirty;
@@ -302,7 +312,7 @@ module DCacheFSM_DDR(
 		begin
 			ws_cyc <= 1'b1;
 			state <= STATE_WS_READ;
-			addr[26:10] <= addr[26:10] ^ newTag_reg;
+			addr[25:9] <= addr[25:9] ^ newTag_reg;
 		end
 		else if(blockDirty)
 		begin
@@ -316,33 +326,21 @@ module DCacheFSM_DDR(
 		if(ws_ack)
 		begin
 			state <= STATE_MEM_WRITE_END;
-			dinb <= ws_din[255:0];
-			dataInReg <= ws_din[511:256];
+			dinb <= waySel? {ws_din[255:0], ws_din[511:256]}: ws_din;
 			web <= 1'b1;
 			ws_cyc <= writeBack;
 		end
 	end
-	STATE_MEM_WRITE: begin
-		state <= STATE_MEM_WRITE_END;
-		web <= 1'b1;
-		dinb <= dataInReg;
-	end
 	STATE_MEM_WRITE_END: begin
 		web <= 1'b0;
-		addr[0] <= ~addr[0];
-		if(addr[0])
+		completeStb <= 1'b1;
+		if(writeBack)
 		begin
-			completeStb <= 1'b1;
-			if(writeBack)
-			begin
-				state <= STATE_WS_WRITE;
-				addr[26:10] <= addr[26:10] ^ newTag_reg;
-			end
-			else
-				state <= STATE_IDLE;
+			state <= STATE_WS_WRITE;
+			addr[25:9] <= addr[25:9] ^ newTag_reg;
 		end
 		else
-			state <= STATE_MEM_WRITE;
+			state <= STATE_IDLE;
 	end
 	STATE_WS_WRITE: begin
 		if(ws_ack)

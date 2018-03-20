@@ -6,11 +6,9 @@
  * primitives whose read port width are 4 bits and write port width 64 bits.
  * 
  * Data for data cache is a TDP RAM, constructed by 8 TDP RAM primitives whose
- * port widths are 9 bits and 36 bits. Downscaling is performed on CPU-side port,
- * while upscaling is performed on DRAM-side port.
- * DRAM-size upscaling degrades cache performance: continuous write/read operation
- * is impossible on DRAM-side port, although currently DRAM-side port performs a single
- * write or read on each cache miss.
+ * port widths are 9 bits and 36 bits. Downscaling is performed on CPU-side port.
+ * Upscaling on DRAM-side port is performed by interleaving the two ways; more details
+ * in data cache notes.
  * 
  * Data for data cache has a delayed-decision feature: writing to data cache can be
  * cancelled one cycle after the write operation by asserting writeReject high.
