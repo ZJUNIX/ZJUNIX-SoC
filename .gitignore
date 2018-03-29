@@ -47,3 +47,9 @@ Temporary Items
 .apdisk
 
 *.zip
+
+/src/platform/*/ip/*/*
+!/src/platform/*/ip/*/*.xci
+!/src/platform/*/ip/*/mig_a.prj
+!/src/platform/*/ip/*/mig_b.prj
+/project/*/
