@@ -1,8 +1,14 @@
-# About this repository
+# ZJUNIX-SoC
 
-A simple System-on-Chip built on an FPGA, originally targeted at Zhejiang University's SWORD4 FPGA experiment platform. Detailed documentation is currently in progress; a general description is provided in doc/SoC.md.
+A simple System-on-Chip built on an FPGA, originally targeted at Zhejiang University's SWORD4 FPGA experiment platform. It is designed to support simple operating systems developed by students; the first operating system running on this SoC is [ZJUNIX](https://github.com/ZJUNIX/ZJUNIX).
 
-#Create the project
+Detailed documentation is currently in progress; a general description is provided in doc/SoC.md.
+
+# Lisence
+
+[BSD-3-Clause](./LICENSE)
+
+# Creating the project
 
 Follow these steps to create the SoC project from this repository:
 
