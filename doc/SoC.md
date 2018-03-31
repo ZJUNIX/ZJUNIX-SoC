@@ -138,6 +138,7 @@ Address allocation(shown in virtual address space):
 
 | Address                 | Device                        |
 | ----------------------- | ----------------------------- |
+| 0xBF000000 - 0xBF3FFFFF | SRAM                          |
 | 0xBFC00000 - 0xBFC03FFF | ROM for BIOS/bootloader       |
 | 0xBFC04000 - 0xBFC07FFF | Character mode VRAM           |
 | 0xBFC08000 - 0xBFC08FFF | Buffer for SD card controller |

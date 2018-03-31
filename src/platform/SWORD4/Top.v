@@ -38,7 +38,16 @@ module Top(
 	output ddr3_cs_n,
 	output [3:0] ddr3_dm,
 	output [0:0] ddr3_odt,
-	output sdRst
+	output sdRst,
+	
+	//SRAM
+	output [2:0]sram_ce_n,
+	output [2:0]sram_oe_n,
+	output [2:0]sram_we_n,
+	output [2:0]sram_ub_n,
+	output [2:0]sram_lb_n,
+    output [19:0]sram_addr,
+    inout [47:0]sram_data
 );
 
 	//Unused I/O signals
@@ -50,7 +59,7 @@ module Top(
 	wire [31:0] addrIBus, dinIBus;
 	//DBus signals
 	wire [31:0] addrDBus, doutDBus, dinDBus;
-	wire stbDBus, weDBus;
+	wire stbDBus, weDBus, nakDBus;
 	wire [3:0] dmDBus;
 	//Wishbone DDR3 signals
 	wire [31:0] addrDDR;
@@ -58,8 +67,10 @@ module Top(
 	wire stbDDR, cycDDR, weDDR, ackDDR;
 	wire [63:0] dmDDR;
 	//Peripheral signals
-	wire [31:0] progMemData, cVramData, gVramData, ioData, sdCtrlData, sdDataData;
-	wire progMemEN, cVramEN, gVramEN, ioEN, sdCtrlEN, sdDataEN;
+	wire [31:0] progMemData, cVramData, gVramData, ioData, sdCtrlData, sdDataData, sramData;
+	wire progMemEN, cVramEN, gVramEN, ioEN, sdCtrlEN, sdDataEN, sramEN, sramNak;
+	//sram
+	wire [47:0] sram_din, sram_dout;
 	
 	wire [4:0] cpuInterrupt;
 	
@@ -74,7 +85,7 @@ module Top(
 		.clkCPU(clkCPU), .clkDDR(clkDDR), .rst(globlRst), .interrupt(cpuInterrupt),
 		.addrIBus(addrIBus), .dinIBus(dinIBus), .stbIBus(), .nakIBus(1'b0),
 		.addrDBus(addrDBus), .doutDBus(doutDBus), .dinDBus(dinDBus),
-		.stbDBus(stbDBus), .weDBus(weDBus), .dmDBus(dmDBus), .nakDBus(1'b0),
+		.stbDBus(stbDBus), .weDBus(weDBus), .dmDBus(dmDBus), .nakDBus(nakDBus),
 		.addrDDR(addrDDR), .doutDDR(doutDDR), .dinDDR(dinDDR), .dmDDR(dmDDR),
 		.cycDDR(cycDDR), .stbDDR(stbDDR), .weDDR(weDDR), .ackDDR(ackDDR),
 		.dbg_vPC(dbg_vPC), .dbg_vAddr(dbg_vAddr), .dbg_IDPC(), .dbg_EXPC(), .dbg_MEMPC()
@@ -112,13 +123,14 @@ module Top(
 		.sd_dat(sdDat), .sd_cmd(sdCmd), .sd_clk(sdClk), .sd_rst(sdRst), .sd_cd(sdCd));
 	
 	CPUBus bus0(.clk(clkCPU), .rst(globlRst), .masterEN(stbDBus),
-		.addrBus(addrDBus), .dataToCPU(dinDBus),
-		.progMemEN(progMemEN), .progMemData(progMemData),
-		.cVramEN(cVramEN), .cVramData(cVramData),
-		.gVramEN(gVramEN), .gVramData(gVramData),
-		.ioEN(ioEN), .ioData(ioData),
-		.sdCtrlEN(sdCtrlEN), .sdCtrlData(sdCtrlData),
-		.sdDataEN(sdDataEN), .sdDataData(sdDataData));
+		.addrBus(addrDBus), .dataToCPU(dinDBus), .nakDBus(nakDBus),
+		.progMemEN(progMemEN), .progMemData(progMemData), .progMemNak(1'b0),
+		.cVramEN(cVramEN), .cVramData(cVramData), .cVramNak(1'b0),
+		.gVramEN(gVramEN), .gVramData(gVramData), .gVramNak(1'b0),
+		.ioEN(ioEN), .ioData(ioData), .ioNak(1'b0),
+		.sdCtrlEN(sdCtrlEN), .sdCtrlData(sdCtrlData), .sdCtrlNak(1'b0),
+		.sdDataEN(sdDataEN), .sdDataData(sdDataData), .sdDataNak(1'b0),
+		.sramEN(sramEN), .sramData(sramData), .sramNak(sramNak));
 	
 	BiosMem mem0(.clka(clkCPU), .addra(addrDBus[13:2]), .dina(doutDBus),
 		.wea(dmDBus), .ena(progMemEN), .douta(progMemData),
@@ -151,6 +163,27 @@ module Top(
 		.ddr3_dm(ddr3_dm),
 		.ddr3_odt(ddr3_odt)
 	);
+	
+	
+	SRAM sram(
+	   .clk(clkCPU),
+	   .rst(globlRst),
+	   .sram_ce_n(sram_ce_n),
+	   .sram_oe_n(sram_oe_n),
+	   .sram_we_n(sram_we_n),
+	   .sram_ub_n(sram_ub_n),
+	   .sram_lb_n(sram_lb_n),
+	   .sram_addr(sram_addr),
+       .sram_data(sram_data),
+       
+        // wishbone slave interfaces
+        .wb_stb(sramEN),
+        .wb_addr(addrDBus),
+        .wb_we(dmDBus),
+        .wb_din(doutDBus),
+        .wb_dout(sramData),
+        .wb_nak(sramNak)
+        );
 
 	assign buzzer = 1'b1;
 
