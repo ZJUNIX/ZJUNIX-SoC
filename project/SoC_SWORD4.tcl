@@ -14,91 +14,6 @@
 #   original project, however they will not be launched automatically. To regenerate the
 #   run results please launch the synthesis/implementation runs as needed.
 #
-#*****************************************************************************************
-# NOTE: In order to use this script for source control purposes, please make sure that the
-#       following files are added to the source control system:-
-#
-# 1. This project restoration tcl script (SoC.tcl) that was generated.
-#
-# 2. The following source(s) files that were local or imported into the original project.
-#    (Please see the '$orig_proj_dir' and '$origin_dir' variable setting below at the start of the script)
-#
-#    <none>
-#
-# 3. The following remote source files that were added to the original project:-
-#
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/platform/SWORD/ShiftReg.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/platform/SWORD/Keypad.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/platform/SWORD/Seg7Device.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/platform/SWORD/Infrastructure_Sword.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/platform/SWORD/Top.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/ip/DDR3/mig_a.prj"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/ip/DDR3/mig_b.prj"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/TLBEntry.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/ExcControl.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Infrastructure/PS2Driver.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/StageMem.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Infrastructure/ClockDomainCross.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Infrastructure/FIFO.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Infrastructure/PS2Wrapper.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/FwdUnit.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/ALU.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Infrastructure/ReprogInterface.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/Regs.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/Cp0Reg.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Infrastructure/UARTWrapper.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/Cp0.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/SD/SDWrapper.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/stageEX.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Infrastructure/BiosMem.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/TranslatePredict.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/PCPU.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Infrastructure/UART.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Infrastructure/ResetGen.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Infrastructure/VRAM.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Infrastructure/VGADevice.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Infrastructure/VGAScan.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/MulDiv.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/TLBHeader.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/BranchPredictor.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/InstDecoder.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/divider.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/TLB.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Infrastructure/AntiJitter.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/StageID.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Cache/DCache.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Cache/ICache.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Cache/CacheFlags.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/Cache/CacheData.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPUBus.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPUCacheTop.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/platform/SWORD/DDR3_wsWrapper.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/TLBDefines.vh"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/CPU/TLBRNG.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/SD/SDC_Clocking.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/SD/SDC_DataReceiver.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/SD/SDC_Datapath.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/SD/SDC_TxDownscaler.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/SD/SDC_CRC.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/SD/SDC_Cmdpath.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/SD/SDC_DMA.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/SD/SDC_Registers.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/SD/SDC_RxUpscaler.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/SD/SDController.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/v/SD/SDC_DataTransmitter.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/ip/ClockGen/ClockGen.xci"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/ip/DDR3/DDR3.xci"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/ip/GraphicVRAM/GraphicVRAM.xci"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/ip/dbgModule/dbgModule.xci"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/platform/SWORD/Sword_phy.xdc"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/src/platform/SWORD/Sword_pin.xdc"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/sim/CacheSim.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/sim/DCacheSim.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/sim/ShiftRegSim.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/sim/RNGSim.v"
-#    "C:/Users/YunYe/Documents/Xilinx/SoC/SoC_rev3_Sword4/sim/SDSim.v"
-#
-#*****************************************************************************************
 
 # Set the reference directory for source file relative paths (by default the value is script directory path)
 set origin_dir "../src"
@@ -107,6 +22,8 @@ set origin_dir "../src"
 if { [info exists ::origin_dir_loc] } {
   set origin_dir $::origin_dir_loc
 }
+
+source fileset.tcl
 
 variable script_file
 set script_file "SoC.tcl"
@@ -186,121 +103,17 @@ if {[string equal [get_filesets -quiet sources_1] ""]} {
 
 # Set 'sources_1' fileset object
 set obj [get_filesets sources_1]
-set files [list \
- "[file normalize "$origin_dir/platform/SWORD4/ShiftReg.v"]"\
- "[file normalize "$origin_dir/platform/SWORD4/Keypad.v"]"\
- "[file normalize "$origin_dir/platform/SWORD4/Seg7Device.v"]"\
- "[file normalize "$origin_dir/platform/SWORD4/Infrastructure_Sword.v"]"\
- "[file normalize "$origin_dir/platform/SWORD4/Top.v"]"\
- "[file normalize "$origin_dir/platform/SWORD4/ip/DDR3/mig_a.prj"]"\
- "[file normalize "$origin_dir/platform/SWORD4/ip/DDR3/mig_b.prj"]"\
- "[file normalize "$origin_dir/v/CPU/TLBEntry.v"]"\
- "[file normalize "$origin_dir/v/CPU/ExcControl.v"]"\
- "[file normalize "$origin_dir/v/Infrastructure/PS2Driver.v"]"\
- "[file normalize "$origin_dir/v/CPU/StageMem.v"]"\
- "[file normalize "$origin_dir/v/Infrastructure/ClockDomainCross.v"]"\
- "[file normalize "$origin_dir/v/Infrastructure/FIFO.v"]"\
- "[file normalize "$origin_dir/v/Infrastructure/PS2Wrapper.v"]"\
- "[file normalize "$origin_dir/v/CPU/FwdUnit.v"]"\
- "[file normalize "$origin_dir/v/CPU/ALU.v"]"\
- "[file normalize "$origin_dir/v/Infrastructure/ReprogInterface.v"]"\
- "[file normalize "$origin_dir/v/CPU/Regs.v"]"\
- "[file normalize "$origin_dir/v/CPU/Cp0Reg.v"]"\
- "[file normalize "$origin_dir/v/Infrastructure/UARTWrapper.v"]"\
- "[file normalize "$origin_dir/v/CPU/Cp0.v"]"\
- "[file normalize "$origin_dir/v/SD/SDWrapper.v"]"\
- "[file normalize "$origin_dir/v/CPU/stageEX.v"]"\
- "[file normalize "$origin_dir/v/Infrastructure/BiosMem.v"]"\
- "[file normalize "$origin_dir/v/CPU/TranslatePredict.v"]"\
- "[file normalize "$origin_dir/v/CPU/PCPU.v"]"\
- "[file normalize "$origin_dir/v/Infrastructure/UART.v"]"\
- "[file normalize "$origin_dir/v/Infrastructure/ResetGen.v"]"\
- "[file normalize "$origin_dir/v/Infrastructure/VRAM.v"]"\
- "[file normalize "$origin_dir/v/Infrastructure/VGADevice.v"]"\
- "[file normalize "$origin_dir/v/Infrastructure/VGAScan.v"]"\
- "[file normalize "$origin_dir/v/CPU/MulDiv.v"]"\
- "[file normalize "$origin_dir/v/CPU/TLBHeader.v"]"\
- "[file normalize "$origin_dir/v/CPU/BranchPredictor.v"]"\
- "[file normalize "$origin_dir/v/CPU/InstDecoder.v"]"\
- "[file normalize "$origin_dir/v/CPU/divider.v"]"\
- "[file normalize "$origin_dir/v/CPU/TLB.v"]"\
- "[file normalize "$origin_dir/v/Infrastructure/AntiJitter.v"]"\
- "[file normalize "$origin_dir/v/CPU/StageID.v"]"\
- "[file normalize "$origin_dir/v/Cache/DCache.v"]"\
- "[file normalize "$origin_dir/v/Cache/ICache.v"]"\
- "[file normalize "$origin_dir/v/Cache/CacheFlags.v"]"\
- "[file normalize "$origin_dir/v/Cache/CacheData.v"]"\
- "[file normalize "$origin_dir/v/CPUBus.v"]"\
- "[file normalize "$origin_dir/v/CPUCacheTop.v"]"\
- "[file normalize "$origin_dir/platform/SWORD4/DDR3_wsWrapper.v"]"\
- "[file normalize "$origin_dir/v/CPU/TLBDefines.vh"]"\
- "[file normalize "$origin_dir/v/CPU/TLBRNG.v"]"\
- "[file normalize "$origin_dir/v/SD/SDC_Clocking.v"]"\
- "[file normalize "$origin_dir/v/SD/SDC_DataReceiver.v"]"\
- "[file normalize "$origin_dir/v/SD/SDC_Datapath.v"]"\
- "[file normalize "$origin_dir/v/SD/SDC_TxDownscaler.v"]"\
- "[file normalize "$origin_dir/v/SD/SDC_CRC.v"]"\
- "[file normalize "$origin_dir/v/SD/SDC_Cmdpath.v"]"\
- "[file normalize "$origin_dir/v/SD/SDC_DMA.v"]"\
- "[file normalize "$origin_dir/v/SD/SDC_Registers.v"]"\
- "[file normalize "$origin_dir/v/SD/SDC_RxUpscaler.v"]"\
- "[file normalize "$origin_dir/v/SD/SDController.v"]"\
- "[file normalize "$origin_dir/v/SD/SDC_DataTransmitter.v"]"\
-]
-add_files -norecurse -fileset $obj $files
+add_files -norecurse -fileset $obj $rtl_common
+add_files -norecurse -fileset $obj $rtl_SWORD4
 
 # Set 'sources_1' fileset file properties for remote files
-set file "$origin_dir/v/CPU/TLBDefines.vh"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
-set_property "file_type" "Verilog Header" $file_obj
-
+set_property "file_type" "Verilog Header" [get_files -of_objects [get_filesets sources_1] $header_common]
 
 # Set 'sources_1' fileset file properties for local files
 # None
 
 # Set 'sources_1' fileset properties
-set obj [get_filesets sources_1]
-set_property "top" "Top" $obj
-
-# Set 'sources_1' fileset object
-set obj [get_filesets sources_1]
-set files [list \
- "[file normalize "$origin_dir/platform/SWORD4/ip/ClockGen/ClockGen.xci"]"\
-]
-add_files -norecurse -fileset $obj $files
-
-# Set 'sources_1' fileset file properties for remote files
-# None
-
-# Set 'sources_1' fileset file properties for local files
-# None
-
-# Set 'sources_1' fileset object
-set obj [get_filesets sources_1]
-set files [list \
- "[file normalize "$origin_dir/platform/SWORD4/ip/DDR3/DDR3.xci"]"\
-]
-add_files -norecurse -fileset $obj $files
-
-# Set 'sources_1' fileset file properties for remote files
-# None
-
-# Set 'sources_1' fileset file properties for local files
-# None
-
-# Set 'sources_1' fileset object
-set obj [get_filesets sources_1]
-set files [list \
- "[file normalize "$origin_dir/platform/SWORD4/ip/GraphicVRAM/GraphicVRAM.xci"]"\
-]
-add_files -norecurse -fileset $obj $files
-
-# Set 'sources_1' fileset file properties for remote files
-# None
-
-# Set 'sources_1' fileset file properties for local files
-# None
+set_property "top" "Top" [get_filesets sources_1]
 
 # Create 'SwordV4' fileset (if not found)
 if {[string equal [get_filesets -quiet SwordV4] ""]} {
@@ -311,24 +124,14 @@ if {[string equal [get_filesets -quiet SwordV4] ""]} {
 set obj [get_filesets SwordV4]
 
 # Add/Import constrs file and set constrs file properties
-set file "[file normalize "$origin_dir/platform/SWORD4/Sword_phy.xdc"]"
-set file_added [add_files -norecurse -fileset $obj $file]
-set file "$origin_dir/platform/SWORD4/Sword_phy.xdc"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets SwordV4] [list "*$file"]]
+set file_added [add_files -norecurse -fileset $obj $constr_SWORD4]
+set file_obj [get_files -of_objects $obj $constr_SWORD4]
 set_property "file_type" "XDC" $file_obj
-
-# Add/Import constrs file and set constrs file properties
-set file "[file normalize "$origin_dir/platform/SWORD4/Sword_pin.xdc"]"
-set file_added [add_files -norecurse -fileset $obj $file]
-set file "$origin_dir/platform/SWORD4/Sword_pin.xdc"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets SwordV4] [list "*$file"]]
-set_property "file_type" "XDC" $file_obj
+set_property "used_in" "implementation" $file_obj
+set_property "used_in_synthesis" "0" $file_obj
 
 # Set 'SwordV4' fileset properties
-set obj [get_filesets SwordV4]
-set_property "target_constrs_file" "[file normalize "$origin_dir/platform/SWORD4/Sword_phy.xdc"]" $obj
+set_property "target_constrs_file" $constr_SWORD4_target $obj
 
 # Create 'sim_1' fileset (if not found)
 if {[string equal [get_filesets -quiet sim_1] ""]} {
