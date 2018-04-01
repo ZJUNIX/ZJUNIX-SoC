@@ -20,14 +20,18 @@ module CPUBus(
 	//SD control, bfc09100-bfc09200, 64 word
 	output sdCtrlEN, input [31:0] sdCtrlData, input sdCtrlNak,
 	//SD data, bfc08000-bfc09000, 1K word(8 sectors)
-	output sdDataEN, input [31:0] sdDataData, input sdDataNak
+	output sdDataEN, input [31:0] sdDataData, input sdDataNak,
+	//SRAM data, bf000000-bf3fffff, 2M word
+	output sramEN, input [31:0]sramData, input sramNak
 );
-	reg [5:0] en_reg;
-	wire [5:0] nak = {progMemNak, cVramNak, gVramNak, ioNak, sdCtrlNak, sdDataNak};
+	reg [6:0] en_reg;
+	wire [6:0] nak = {progMemNak, cVramNak, gVramNak, ioNak, sdCtrlNak, sdDataNak, sramNak};
 	assign nakDBus = |(en_reg & nak);
 	
 	always @ (posedge clk)
-		if(!nakDBus) en_reg <= {progMemEN, cVramEN, gVramEN, ioEN, sdCtrlEN, sdDataEN};
+	    if (rst) en_reg <= 0;
+		else if(!nakDBus) en_reg <= {progMemEN, cVramEN, gVramEN, ioEN, sdCtrlEN, sdDataEN, sramEN};
+		else en_reg <= en_reg;
 	
 	assign progMemEN = masterEN & (addrBus[28:14] == 15'b1_1111_1100_0000_00);
 	assign cVramEN   = masterEN & (addrBus[28:14] == 15'b1_1111_1100_0000_01);
@@ -35,16 +39,18 @@ module CPUBus(
 	assign ioEN      = masterEN & (addrBus[28:8]  == 21'b1_1111_1100_0000_1001_0000);//bfc090
 	assign sdCtrlEN  = masterEN & (addrBus[28:8]  == 21'b1_1111_1100_0000_1001_0001);//bfc091
 	assign sdDataEN  = masterEN & (addrBus[28:12] == 17'b1_1111_1100_0000_1000);//bfc08
+	assign sramEN    = masterEN & (addrBus[28:22] ==  7'b1_1111_00);
 	
 	always @*
 	begin
 		case(en_reg)
-		6'b100000: dataToCPU <= progMemData;
-		6'b010000: dataToCPU <= cVramData;
-		6'b001000: dataToCPU <= gVramData;
-		6'b000100: dataToCPU <= ioData;
-		6'b000010: dataToCPU <= sdCtrlData;
-		6'b000001: dataToCPU <= sdDataData;
+		7'b1000000: dataToCPU <= progMemData;
+		7'b0100000: dataToCPU <= cVramData;
+		7'b0010000: dataToCPU <= gVramData;
+		7'b0001000: dataToCPU <= ioData;
+		7'b0000100: dataToCPU <= sdCtrlData;
+		7'b0000010: dataToCPU <= sdDataData;
+		7'b0000001: dataToCPU <= sramData;
 		default:   dataToCPU <= 32'h0;
 		endcase
 	end
