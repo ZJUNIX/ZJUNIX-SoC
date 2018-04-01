@@ -1,3 +1,8 @@
+#
+# fileset.tcl : TCL script recording source files for project ZJUNIX-SoC 
+# $origin_dir = ZJUNIX-SoC/src
+#
+
 #RTL sources shared across all platforms
 set rtl_common [list \
  "[file normalize "$origin_dir/v/Infrastructure/ClockDomainCross.v"]"\
@@ -74,9 +79,12 @@ set rtl_SWORD4 [list \
  "[file normalize "$origin_dir/platform/SWORD4/Seg7Device.v"]"\
  "[file normalize "$origin_dir/platform/SWORD4/Infrastructure_Sword.v"]"\
  "[file normalize "$origin_dir/platform/SWORD4/Top.v"]"\
+ "[file normalize "$origin_dir/platform/SWORD4/DDR3_wsWrapper.v"]"\
  "[file normalize "$origin_dir/platform/SWORD4/ip/DDR3/mig_a.prj"]"\
  "[file normalize "$origin_dir/platform/SWORD4/ip/DDR3/mig_b.prj"]"\
- "[file normalize "$origin_dir/platform/SWORD4/DDR3_wsWrapper.v"]"\
+ "[file normalize "$origin_dir/platform/SWORD4/ip/DDR3/DDR3.xci"]"\
+ "[file normalize "$origin_dir/platform/SWORD4/ip/ClockGen/ClockGen.xci"]"\
+ "[file normalize "$origin_dir/platform/SWORD4/ip/GraphicVRAM/GraphicVRAM.xci"]"\
 ]
 
 #Verilog headers
