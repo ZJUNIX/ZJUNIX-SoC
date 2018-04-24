@@ -54,6 +54,7 @@ set rtl_common [list \
  "[file normalize "$origin_dir/v/Infrastructure/VGADevice.v"]"\
  "[file normalize "$origin_dir/v/CPUCacheTop.v"]"\
  "[file normalize "$origin_dir/v/CPUBus.v"]"\
+ "[file normalize "$origin_dir/v/DBusArbiter.v"]"\
  "[file normalize "$origin_dir/v/Infrastructure/BiosMem.v"]"\
  "[file normalize "$origin_dir/v/Infrastructure/ResetGen.v"]"\
 ]
