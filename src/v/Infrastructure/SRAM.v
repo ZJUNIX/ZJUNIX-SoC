@@ -90,7 +90,7 @@ module SRAM(
     end
     
     always @(posedge clk) begin
-        wb_nak <= 1'b1;
+        wb_nak <= 1'b0;
         sram_ce_n <= 3'b111;
         sram_oe_n <= 3'b111;
         sram_we_n <= 3'b111;
@@ -100,7 +100,7 @@ module SRAM(
         sram_dout <= 48'b0;
         if (~rst) case (next_state)
             S_IDLE: begin
-                wb_nak <= 1'b1;
+                wb_nak <= 1'b0;
             end
             S_READ: begin
                  wb_nak <= 1'b1;

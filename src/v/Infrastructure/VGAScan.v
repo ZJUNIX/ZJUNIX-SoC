@@ -8,7 +8,7 @@
  */
 module VGAScan(
 	input clk, input [11:0] videoIn,
-	output [9:0] HAddr, output [8:0] VAddr,	output reg frameStart,
+	output [9:0] HAddr, output [8:0] VAddr,	output reg frameStart, output videoOn,
 	output reg HSync,
 	output reg VSync,
 	output reg [11:0] videoOut
@@ -70,5 +70,7 @@ localparam VEND = 10'd515 + VCALIBRATE;
 		HSync <= (HCount >= 10'd96);
 		VSync <= (VCount >= 10'd2);
 	end
-
+    
+    assign videoOn = HActive & VActive;
+    
 endmodule

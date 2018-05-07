@@ -9,15 +9,24 @@
 module VGADevice #(
 	parameter GRAPHIC_VRAM = 1
 )(
+    input rst,
+    
 	input clkVGA, input clkMem,
 	//Control registers
 	input [31:0] ctrl0, input [31:0] ctrl1,
 	//CPU data bus
 	input [31:0] addrBus, input [31:0] dataInBus, input [3:0] weBus,
 	//CPU IO interface(Graphic); addr[11:2]=X, addr[20:12]=Y
-	input en_Graphic,
+	//input en_Graphic,
 	//CPU IO interface(Character); appears 128x32, uses addr[13:2]
 	input en_Char, output [31:0] dataOut_Char,
+	//Wishbone bus for reading from SRAM
+	output reg wb_stb,
+    output [31:0] wb_addr,
+    output reg [3:0] wb_we = 4'b0,
+    output reg [31:0] wb_din = 32'b0,
+    input [47:0] wb_dout,
+    input wb_nak,
 	//VGA O: internal
 	output [9:0] HCoord, output [8:0] VCoord, output frameStart,
 	//VGA O: external
@@ -25,32 +34,65 @@ module VGADevice #(
 );
 	
 	//Graphic VRAM logic
+    
 	wire [11:0] colorG;
+	wire videoOn;
 	generate
 	if(GRAPHIC_VRAM != 0)
 	begin: GRAPHIC_VRAM_EXIST
-		reg [18:0] addrBus_reg, addra_reg;
-		reg [1:0] ena_reg, wea_reg;
-		wire [18:0] addra, addrb;
-		reg [11:0] dina_reg0, dina_reg1;
-	
-		assign addra = addrBus_reg[18:10] * 640 + addrBus_reg[9:0];
-		assign addrb = VCoord * 640 + HCoord;
-		GraphicVRAM RAM0 (.clka(clkMem), .ena(ena_reg[1]), .wea(wea_reg[1]), .addra(addra_reg),
-			.dina(dina_reg1), .clkb(clkVGA), .addrb(addrb), .doutb(colorG));
-	
-		always @ (posedge clkMem)
-		begin
-			dina_reg0 <= dataInBus[11:0];
-			addrBus_reg <= addrBus[20:2];
-			wea_reg[0] <= &weBus;
-			ena_reg[0] <= en_Graphic;
-			
-			dina_reg1 <= dina_reg0;
-			addra_reg <= addra;
-			wea_reg[1] <= wea_reg[0];
-			ena_reg[1] <= ena_reg[0];
-		end
+        
+        wire buf_full_, buf_empty_;
+        reg reading = 0;
+        always @(posedge clkMem) begin
+            if (rst) begin
+                reading <= 0;
+                wb_stb <= 0;
+            end
+            else begin
+                wb_stb <= wb_stb;
+                reading <= reading;
+                case ({wb_stb, reading})
+                    2'b00: wb_stb <= buf_full_;
+                    2'b01: reading <= wb_nak;
+                    2'b10: begin
+                           wb_stb <= wb_nak;
+                           reading <= ~wb_nak;
+                           end
+                endcase
+            end
+        end
+        
+        reg [9:0]curReadX = 0;
+        reg [8:0]curReadY = 0;
+        always @(posedge clkMem) begin
+            if (rst) begin
+                curReadX <= 0;
+                curReadY <= 0;
+            end
+            else if (reading & ~wb_nak) begin
+                curReadX <= (curReadX == 638) ? 0 : curReadX + 2;
+                curReadY <= (curReadX == 638) ? ((curReadY == 479) ? 0 : curReadY + 1) : curReadY;
+            end
+        end
+        assign wb_addr = curReadY * 640 + curReadX[9:1];
+        
+        reg high_low = 0;
+        wire buf_next;
+        wire [31:0]bufData;
+        always @(posedge clkVGA)begin
+            if (rst)
+                high_low <= 1'b0;
+            else
+                high_low <= videoOn ? ~high_low : 1'b0;
+        end
+        assign buf_next = high_low & videoOn;
+        assign colorG = buf_empty_ ? (high_low ? bufData[27:16] : bufData[11:0]) : 0;
+            
+        AxisFifo #(.WIDTH(32), .DEPTH_BITS(5), .SYNC_STAGE_I(0), .SYNC_STAGE_O(1))
+            Fifo ( .s_rst(rst), .m_rst(rst),
+            .s_clk(clkMem),  .s_valid(reading & ~wb_nak), .s_ready(buf_full_),.s_data(wb_dout[31:0]), .s_load(),
+            .m_clk(clkVGA),  .m_valid(buf_empty_),.m_ready(buf_next), .m_data(bufData), .m_load()
+        );
 	end
 	else
 	begin: GRAPHIC_VRAM_NOTEXIST
@@ -73,7 +115,7 @@ module VGADevice #(
 	reg [11:0] colorMixed;
 	VGAScan #(.HCALIBRATE(0), .VCALIBRATE(0)) U0(
 		.clk(clkVGA), .HAddr(HCoord), .VAddr(VCoord), .HSync(HSync), .VSync(VSync),
-		.videoIn(colorMixed), .frameStart(frameStart), .videoOut(videoOut));
+		.videoIn(colorMixed), .frameStart(frameStart), .videoOn(videoOn), .videoOut(videoOut));
 	
 	always @ (posedge clkVGA)
 	begin
