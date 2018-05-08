@@ -16,12 +16,10 @@ module VGADevice #(
 	input [31:0] ctrl0, input [31:0] ctrl1,
 	//CPU data bus
 	input [31:0] addrBus, input [31:0] dataInBus, input [3:0] weBus,
-	//CPU IO interface(Graphic); addr[11:2]=X, addr[20:12]=Y
-	//input en_Graphic,
 	//CPU IO interface(Character); appears 128x32, uses addr[13:2]
 	input en_Char, output [31:0] dataOut_Char,
 	//Wishbone bus for reading from SRAM
-	output reg wb_stb,
+	output wb_stb,
     output [31:0] wb_addr,
     output reg [3:0] wb_we = 4'b0,
     output reg [31:0] wb_din = 32'b0,
@@ -44,23 +42,10 @@ module VGADevice #(
         wire buf_full_, buf_empty_;
         reg reading = 0;
         always @(posedge clkMem) begin
-            if (rst) begin
-                reading <= 0;
-                wb_stb <= 0;
-            end
-            else begin
-                wb_stb <= wb_stb;
-                reading <= reading;
-                case ({wb_stb, reading})
-                    2'b00: wb_stb <= buf_full_;
-                    2'b01: reading <= wb_nak;
-                    2'b10: begin
-                           wb_stb <= wb_nak;
-                           reading <= ~wb_nak;
-                           end
-                endcase
-            end
+            if (~reading & wb_stb) reading <= 1'b1;
+            if (reading & ~wb_nak) reading <= 1'b0;
         end
+        assign wb_stb = buf_full_ & ~reading & ~rst;
         
         reg [9:0]curReadX = 0;
         reg [8:0]curReadY = 0;
@@ -86,6 +71,8 @@ module VGADevice #(
                 high_low <= videoOn ? ~high_low : 1'b0;
         end
         assign buf_next = high_low & videoOn;
+        //once buf is empty a serious error will occure
+        //this is a bug
         assign colorG = buf_empty_ ? (high_low ? bufData[27:16] : bufData[11:0]) : 0;
             
         AxisFifo #(.WIDTH(32), .DEPTH_BITS(5), .SYNC_STAGE_I(0), .SYNC_STAGE_O(1))
@@ -182,4 +169,50 @@ module vgaCursorGen(
 	
 	assign en_ascii = (HCoord[9:3] == `CURSOR_X) & (VCoord[8:4] == `CURSOR_Y);
 	
+endmodule
+
+module VGADevice_sim();
+    reg rst = 0;
+    reg clk = 1;
+    reg clk_vga = 1;
+    wire wb_stb;
+    wire [31:0]wb_addr;
+    wire [3:0]wb_we;
+    wire [31:0]wb_din;
+    reg  [31:0]wb_dout;
+    reg wb_nak;
+    wire [8:0]HCoord;
+    wire [9:0]VCoord;
+    VGADevice vga(
+        .rst(rst),
+        .clkVGA(clk_vga),.clkMem(clk),
+        .ctrl0(32'b0), .ctrl1(32'b1),
+        .addrBus(32'b0), .dataInBus(32'b0), .weBus(4'b0),
+        .en_Char(1'b0), .dataOut_Char(),
+        .wb_stb(wb_stb),
+        .wb_addr(wb_addr),
+        .wb_we(wb_we),
+        .wb_din(wb_din),
+        .wb_dout(wb_dout),
+        .wb_nak(wb_nak),
+        .HCoord(HCoord),.VCoord(VCoord), .frameStart(),
+        .videoOut(), .HSync(), .VSync()
+    );
+    
+    initial forever #5 clk = !clk;
+    initial forever #25 clk_vga = !clk_vga;
+    
+    initial begin
+        rst = 1;
+        #11
+        rst = 0;
+        wb_nak = 0;
+        wb_dout = 32'b0;
+        #10
+        wb_nak = 1;
+        #50
+        wb_nak = 0;
+        wb_dout = 32'h01234567;
+        
+    end
 endmodule
