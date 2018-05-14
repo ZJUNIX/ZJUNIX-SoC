@@ -58,7 +58,9 @@ module Top(
 	//IBus signals
 	wire [31:0] addrIBus, dinIBus;
 	//DBus signals
-	wire [31:0] addrDBus, doutDBus, dinDBus;
+	//(* MARK_DEBUG = "true" *)
+	wire [31:0] addrDBus;
+	wire [31:0] doutDBus, dinDBus;
 	wire stbDBus, weDBus, nakDBus;
 	wire [3:0] dmDBus;
 	//Wishbone DDR3 signals
@@ -68,9 +70,9 @@ module Top(
 	wire [63:0] dmDDR;
 	//Peripheral signals
 	wire [31:0] progMemData, cVramData, gVramData, ioData, sdCtrlData, sdDataData, sramData;
-	wire progMemEN, cVramEN, gVramEN, ioEN, sdCtrlEN, sdDataEN, sramEN, sramNak;
-	//sram
-	wire [47:0] sram_din, sram_dout;
+	wire progMemEN, cVramEN, gVramEN, ioEN, sdCtrlEN, sdDataEN;
+	//(* MARK_DEBUG = "true" *)
+	wire sramEN, sramNak;
 	
 	wire [4:0] cpuInterrupt;
 	
@@ -81,8 +83,12 @@ module Top(
 	//VGA control registers
 	wire [31:0] vgaCtrlReg0, vgaCtrlReg1;
 	
-	wire [31:0] ddbusData,sramAddr, sramInData;
-	wire  ddbusNak, ddbusEN;
+	wire [31:0]ddbusData;
+	//(* MARK_DEBUG = "true" *)
+	wire [31:0]sramAddr, sramInData;
+	//(* MARK_DEBUG = "true" *)
+	wire ddbusNak, ddbusEN;
+	//(* MARK_DEBUG = "true" *)
     wire [3:0] sram_we;
     
 
@@ -113,6 +119,7 @@ module Top(
 		.dbg_flags({dmDBus, stbDBus, stbDDR, cycDDR, weDDR, ackDDR, dbg_ddrState, cpuInterrupt[3:0]})
 	);
 	assign LED = {stbDBus, stbDDR, cycDDR, weDDR, ackDDR, dbg_ddrState};
+	//(* MARK_DEBUG = "true" *)
 	wire vga_stb, vga_nak;
 	wire [31:0]vga_addr, vga_dout, vga_din;
 	wire [3:0]vga_we;
