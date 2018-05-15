@@ -31,7 +31,8 @@ module SRAM(
         S_WRITE = 2,  // write data
         S_READ_D = 3, //read delay
         S_READ_RES = 4, //read result
-        S_WRITE_RES = 5; //write result
+        S_WRITE_RES = 5, //write result
+        S_WRITE_D = 6;
     
     reg [2:0] state = 0;
     reg [2:0] next_state;
@@ -66,7 +67,10 @@ module SRAM(
                     next_state = S_IDLE;
             end
             S_WRITE: begin
-                 next_state = S_WRITE_RES;
+                 next_state = S_WRITE_D;
+            end
+            S_WRITE_D:begin
+                next_state = S_WRITE_RES;
             end
             S_WRITE_RES: begin
                  if (wb_stb)
@@ -136,12 +140,21 @@ module SRAM(
                 sram_ub_n <= {1'b1, ~wb_we[3], ~wb_we[1]};
                 sram_lb_n <= {1'b1, ~wb_we[2], ~wb_we[0]};
             end
+            S_WRITE_D: begin
+                wb_nak <= 1'b1;
+                sram_ce_n <= sram_ce_n;
+                sram_addr <= sram_addr;
+                sram_dout <= sram_dout;
+                sram_we_n <= {1'b1, ~(bus_we[3] | bus_we[2]), ~(bus_we[1] | bus_we[0])};
+                sram_ub_n <= sram_ub_n;
+                sram_lb_n <= sram_lb_n;
+            end
             S_WRITE_RES: begin
                  wb_nak <= 1'b0;
                  sram_ce_n <= sram_ce_n;
                  sram_addr <= sram_addr;
                  sram_dout <= sram_dout;
-                 sram_we_n <= {1'b1, ~(bus_we[3] | bus_we[2]), ~(bus_we[1] | bus_we[0])};
+                 sram_we_n <= 3'b111;
                  sram_ub_n <= sram_ub_n;
                  sram_lb_n <= sram_lb_n;
             end
