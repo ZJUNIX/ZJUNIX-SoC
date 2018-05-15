@@ -3,12 +3,19 @@ module SRAM(
     input wire rst,  // synchronous reset
 
     // SRAM interfaces
+    (* IOB="true" *)
     output reg [2:0]sram_ce_n,
+    (* IOB="true" *)
     output reg [2:0]sram_oe_n,
+    (* IOB="true" *)
     output reg [2:0]sram_we_n,
+    (* IOB="true" *)
     output reg [2:0]sram_ub_n,
+    (* IOB="true" *)    
     output reg [2:0]sram_lb_n,
+    (* IOB="true" *)
     output reg [19:0] sram_addr,
+    (* IOB="true" *)
     inout wire [47:0] sram_data,
     
     // WishBone Bus
