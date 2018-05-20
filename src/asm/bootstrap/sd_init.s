@@ -1,6 +1,4 @@
 #SD initialize code and read sector function
-.globl	sdInit
-.globl	readSector
 .extern	sleep
 
 .extern	puts
@@ -9,6 +7,14 @@
 .extern	infLoop
 
 .extern	hexCharMap
+
+.globl	sdInit
+.globl	readSector
+
+.set noreorder
+
+.text
+.align 3
 
 sdInit:
 	addu	$sp, $sp, -12
@@ -156,21 +162,35 @@ sd_ACMD41_finish:
 	nop
 	
 sdInit_err:
-	lw	$s0, 0x134($gp)
-	la	$a0, sdInitCmdErrMsg
-	la	$t0, hexCharMap
-	srl	$t1, $v0, 4
-	and	$t2, $v0, 0xf
-	and	$t1, $t1, 0xf
-	addu	$t1, $t1, $t0
-	addu	$t2, $t2, $t0
-	lb	$t1, 0($t1)
-	lb	$t2, 0($t2)
-	sb	$t1, 24($a0)
+#	lw	$s0, 0x134($gp)
+	move	$s0, $v0
+
+	la	$a0, sdInitCmdErrMsg1
 	jal	puts
-	sb	$t2, 25($a0)
+	nop
 	
-	la	$a0, sdInitCmdErrMsg
+	move	$a0, $s0
+	jal	putHex
+	ori	$a1, $zero, 2
+	
+#	la	$a0, sdInitCmdErrMsg
+#	la	$t0, hexCharMap
+#	srl	$t1, $v0, 4
+#	and	$t2, $v0, 0xf
+#	and	$t1, $t1, 0xf
+#	addu	$t1, $t1, $t0
+#	addu	$t2, $t2, $t0
+#	lb	$t1, 0($t1)
+#	lb	$t2, 0($t2)
+#	sb	$t1, 24($a0)
+#	jal	puts
+#	sb	$t2, 25($a0)
+	
+	
+	la	$a0, sdInitCmdErrMsg2
+	jal puts
+	lw	$s0, 0x134($gp)
+	la	$a0, sdInitCmdErrMsg2
 	la	$t0, sdInitCmdErrMsgIndex
 	srl	$t1, $s0, 2
 	and	$t1, $t1, 7
@@ -186,8 +206,9 @@ sdInit_err1:
 	la	$a0, sdInitCMD8ErrMsg
 	jal	puts
 	nop
-	jal	putHex
 	lw	$a0, 0x108($gp)
+	jal	putHex
+	ori	$a1, $zero, 8
 	jal	putchar
 	ori	$a0, $zero, 10
 	
@@ -276,13 +297,15 @@ sd_readSector_err1:
 	la	$a0, sd_readSector_errMsg
 	jal	puts
 	nop
-	jal	putHex
 	move	$a0, $s1
+	jal	putHex
+	ori	$a1, $zero, 8
 	la	$a0, sd_readSector_errMsg1
 	jal	puts
 	nop
-	jal	putHex
 	move	$a0, $v0
+	jal	putHex
+	ori	$a1, $zero, 8
 	jal	putchar
 	li	$a0, 10
 	j	infLoop
@@ -298,18 +321,7 @@ sd_readSector_ret:
 
 #sd_readSector_debug:
 #	.asciiz	"Read sector "
-sd_readSector_errMsg:
-	.asciiz	"Error reading sector 0x"
-sd_readSector_errMsg1:
-	.asciiz	",code="
-sdInitCmdErrMsg:
-	.asciiz "  Error when issuing CMD   to SD card: \0Timeout error.\n\0CRC error.\n\0Timeout and CRC error.\n\0Index error.\n\0Timeout and index error.\n\0CRC and index error.\n\0Timeout, CRC, and index error.\n"
-sdInitCmdErrMsgIndex:
-	.byte	0, 40, 56, 68, 92, 106, 132, 154
-sdInitCMD8ErrMsg:
-	.asciiz	"Expected response 0x1aa after CMD8 but received 0x"
-sdInitACMD41ErrMsg:
-	.asciiz	"Card did not respond properly after 200 tries of ACMD41.\n"
+
 #reportLongResponse:
 #	lw	$t0, 0x114($gp)
 #	srl	$t1, $t0, 24
@@ -346,3 +358,20 @@ sdInitACMD41ErrMsg:
 #	sw	$t0, 0x18($gp)
 #	j	$ra
 #	nop
+
+.section .rodata
+.align 0
+sdInitCmdErrMsg1:
+	.asciiz "  Error when issuing CMD"
+sdInitCmdErrMsg2:
+	.asciiz " to SD card: \0Timeout error.\n\0CRC error.\n\0Timeout and CRC error.\n\0Index error.\n\0Timeout and index error.\n\0CRC and index error.\n\0Timeout, CRC, and index error.\n"
+sd_readSector_errMsg:
+	.asciiz	"Error reading sector 0x"
+sd_readSector_errMsg1:
+	.asciiz	",code="
+sdInitCmdErrMsgIndex:
+	.byte	0, 14, 30, 42, 66, 80, 106, 128
+sdInitCMD8ErrMsg:
+	.asciiz	"Expected response 0x1aa after CMD8 but received 0x"
+sdInitACMD41ErrMsg:
+	.asciiz	"Card did not respond properly after 200 tries of ACMD41.\n"

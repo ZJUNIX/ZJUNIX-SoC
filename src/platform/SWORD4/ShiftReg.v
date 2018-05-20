@@ -10,7 +10,7 @@ module ShiftReg #(
 	parameter WIDTH = 16,
 	parameter DELAY = 12,
 	parameter DIRECTION = 1,
-	parameter ONTIME = 0,
+	parameter ONTIME = {DELAY{1'b1}},
 	parameter inv = 1
 )(
 	input clk, input [WIDTH-1:0] pdata, output [2:0] sout
@@ -53,7 +53,7 @@ module ShiftReg #(
 				oe <= 1'b0;
 			end
 			else
-				oe <= (counter > ONTIME);
+				oe <= (counter < ONTIME);
 			counter <= counter + 1'b1;
 		end
 	end

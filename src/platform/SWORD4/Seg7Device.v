@@ -19,7 +19,7 @@ module Seg7Device(
 		.LE(LES & {8{clkBlink}}), .pattern(dispData));
 	Seg7Remap U1(.I(data), .O(dispPattern));
 
-	ShiftReg #(.WIDTH(64)) U2(.clk(clkIO), .pdata(dispData), .sout(sout));
+	ShiftReg #(.WIDTH(64), .ONTIME(12'hC00)) U2(.clk(clkIO), .pdata(dispData), .sout(sout));
 
 	always @*
 		case(clkScan)

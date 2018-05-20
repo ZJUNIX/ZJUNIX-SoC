@@ -1,9 +1,14 @@
 .extern	readSector
-.globl	loadKernel
 .extern	puts
 .extern	putHex
 .extern	sleep
 
+.globl	loadKernel
+
+.set noreorder
+
+.text
+.align 3
 #Variable map:
 #$s0=fatLocation
 #$s1=firstCluster
@@ -73,15 +78,16 @@ fsTypePassed:
 	addu	$t0, $gp, 512
 	addu	$t1, $t0, 4096
 loadKernel_loop0_start:
-	lw	$t2, -0xc($gp)
+	la	$t4, fileName
+	lw	$t2, 0x0($t4)
 	lw	$t3, 0x0($t0)
 	bne	$t2, $t3, loadKernel_loop0_end
 	nop
-	lw	$t2, -0x8($gp)
+	lw	$t2, 0x4($t4)
 	lw	$t3, 0x4($t0)
 	bne	$t2, $t3, loadKernel_loop0_end
 	nop
-	lw	$t2, -0x4($gp)
+	lw	$t2, 0x8($t4)
 	lw	$t3, 0x8($t0)
 	li	$t4, 0xffffff
 	and	$t3, $t3, $t4
@@ -217,7 +223,9 @@ writebackCluster_loop:
 	j	$ra
 	nop
 	
-fileFoundMsg:	
+.section .rodata
+.align 0
+fileFoundMsg:
 	.asciiz	"Kernel binary found. Loading kernel...\n"
 fileSystemTypeErrMsg:
 	.asciiz "File system of first partition is not FAT32.\n"
@@ -227,9 +235,11 @@ clusterSizeErrMsg:
 	.asciiz "Cluster size is incorrect; 4096 bytes required.\n"
 kernelNotFoundErrMsg:
 	.asciiz "Kernel binary not found.\n"
-fileName:#-0xc($gp)
+.align 2
+fileName:
 	.asciiz	"KERNEL  BIN"
+
+.section .rdata
+.align 2
 sectorBuf:
-#	.space	128
-#clusterBuf:
-#	.space	1024
+	.space	512

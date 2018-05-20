@@ -24,13 +24,7 @@ module BiosMem(
 	
 	always @ (posedge clka)
 	if(ena)
-	begin
-		if(wea[0]) data[addra][ 7: 0] = dina[ 7: 0];
-		if(wea[1]) data[addra][15: 8] = dina[15: 8];
-		if(wea[2]) data[addra][23:16] = dina[23:16];
-		if(wea[3]) data[addra][31:24] = dina[31:24];
 		douta <= data[addra];
-	end
 	
 	always @ (posedge clkb)
 	if(_enb)

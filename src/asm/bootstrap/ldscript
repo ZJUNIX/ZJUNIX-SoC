@@ -1,0 +1,33 @@
+OUTPUT_FORMAT("elf32-tradlittlemips", "elf32-tradbigmips", "elf32-tradlittlemips")
+OUTPUT_ARCH(mips)
+SECTIONS
+{
+    .text 0xbfc00000 :
+	{
+		*(.text)
+		. = ALIGN(8);
+		*(.rodata)
+		. = ALIGN(8);
+	} =0
+	
+	_rom_data_begin = ABSOLUTE(.);
+	_ram_data_begin = 0x80100000;
+	.data _ram_data_begin : AT(_rom_data_begin)
+	{
+		*(.data)
+		*(.sdata)
+		*(.bss)
+		. = ALIGN(8);
+	} =0
+	_data_size = SIZEOF(.data);
+	
+	.rdata :
+	{
+		*(.rdata)
+	}
+	
+	/DISCARD/ :
+    {
+        *(.MIPS.abiflags)
+    }	
+}

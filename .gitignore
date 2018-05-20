@@ -52,4 +52,8 @@ Temporary Items
 !/src/platform/*/ip/*/*.xci
 !/src/platform/*/ip/*/mig_a.prj
 !/src/platform/*/ip/*/mig_b.prj
+/src/asm/bootstrap/*
+!/src/asm/bootstrap/*.s
+!/src/asm/bootstrap/Makefile
+!/src/asm/bootstrap/ldscript
 /project/*/
