@@ -57,6 +57,7 @@ set rtl_common [list \
  "[file normalize "$origin_dir/v/DBusArbiter.v"]"\
  "[file normalize "$origin_dir/v/Infrastructure/BiosMem.v"]"\
  "[file normalize "$origin_dir/v/Infrastructure/ResetGen.v"]"\
+ "[file normalize "$origin_dir/v/Infrastructure/SRAM.v"]"\
 ]
 
 #RTL sources and IP cores for N4DDR platform
