@@ -11,6 +11,7 @@ module VGAScan(
 	output [9:0] HAddr, output [8:0] VAddr,	output reg frameStart, output videoOn,
 	output reg HSync,
 	output reg VSync,
+	output reg VSync2,
 	output reg [11:0] videoOut
 );
 parameter PIPE_STAGE = 10'd2;//Must be at least 2.
@@ -69,6 +70,7 @@ localparam VEND = 10'd515 + VCALIBRATE;
 		HActive_FF <= {HActive, HActive_FF[PIPE_STAGE-1:1]};
 		HSync <= (HCount >= 10'd96);
 		VSync <= (VCount >= 10'd2);
+		VSync2 <= (VCount >= 10'd2);
 	end
     
     assign videoOn = HActive & VActive;

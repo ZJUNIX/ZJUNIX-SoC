@@ -34,23 +34,34 @@ module VGADevice #(
 	//Graphic VRAM logic
     
 	wire [11:0] colorG;
-	wire videoOn;
+	wire videoOn, VSync2;
 	generate
 	if(GRAPHIC_VRAM != 0)
 	begin: GRAPHIC_VRAM_EXIST
         
         wire buf_full_, buf_empty_;
+        reg start = 0;
         reg reading = 0;
         always @(posedge clkMem) begin
-            if (~reading & wb_stb) reading <= 1'b1;
-            if (reading & ~wb_nak) reading <= 1'b0;
+            if (rst) start <= 1'b0;
+            else if(~VSync2) start <= 1'b1;
+            else start <= start;
+        end//after rst, wait VSync = 0, or there will be blink
+        wire en;
+        assign en = ~rst & VSync2 & start;
+        always @(posedge clkMem) begin
+            if (~en) reading <= 1'b0;
+            else begin
+                if (~reading & wb_stb) reading <= 1'b1;
+                if (reading & ~wb_nak) reading <= 1'b0;
+            end
         end
-        assign wb_stb = buf_full_ & ~reading & ~rst;
+        assign wb_stb = buf_full_ & ~reading & en;
         
         reg [9:0]curReadX = 0;
         reg [8:0]curReadY = 0;
         always @(posedge clkMem) begin
-            if (rst) begin
+            if (~en) begin
                 curReadX <= 0;
                 curReadY <= 0;
             end
@@ -59,13 +70,13 @@ module VGADevice #(
                 curReadY <= (curReadX == 638) ? ((curReadY == 479) ? 0 : curReadY + 1) : curReadY;
             end
         end
-        assign wb_addr = curReadY * 640 + curReadX[9:1];
+        assign wb_addr = curReadY * 320 + curReadX[9:1];
         
         reg high_low = 0;
         wire buf_next;
         wire [31:0]bufData;
         always @(posedge clkVGA)begin
-            if (rst)
+            if (~en)
                 high_low <= 1'b0;
             else
                 high_low <= videoOn ? ~high_low : 1'b0;
@@ -76,7 +87,7 @@ module VGADevice #(
         assign colorG = buf_empty_ ? (high_low ? bufData[27:16] : bufData[11:0]) : 0;
             
         AxisFifo #(.WIDTH(32), .DEPTH_BITS(5), .SYNC_STAGE_I(0), .SYNC_STAGE_O(1))
-            Fifo ( .s_rst(rst), .m_rst(rst),
+            Fifo ( .s_rst(~en), .m_rst(~en),
             .s_clk(clkMem),  .s_valid(reading & ~wb_nak), .s_ready(buf_full_),.s_data(wb_dout[31:0]), .s_load(),
             .m_clk(clkVGA),  .m_valid(buf_empty_),.m_ready(buf_next), .m_data(bufData), .m_load()
         );
@@ -101,7 +112,7 @@ module VGADevice #(
 
 	reg [11:0] colorMixed;
 	VGAScan #(.HCALIBRATE(0), .VCALIBRATE(0)) U0(
-		.clk(clkVGA), .HAddr(HCoord), .VAddr(VCoord), .HSync(HSync), .VSync(VSync),
+		.clk(clkVGA), .HAddr(HCoord), .VAddr(VCoord), .HSync(HSync), .VSync(VSync), .VSync2(VSync2),
 		.videoIn(colorMixed), .frameStart(frameStart), .videoOn(videoOn), .videoOut(videoOut));
 	
 	always @ (posedge clkVGA)
