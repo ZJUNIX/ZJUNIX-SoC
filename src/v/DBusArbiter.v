@@ -15,18 +15,19 @@ module DBusArbiter (
 	output stbS, output weS, output [3:0] dmS,
 	input [31:0] doutS, input nakS
 );
-
-	reg master = 0;
-	reg nakMaster = 0;
+    //(* MARK_DEBUG = "true" *)
+	reg master = 0;//control addr din dm to Slave
+	//(* MARK_DEBUG = "true" *)
+	reg nakMaster = 0;//control nak to M0 or M1
 
 	reg [68:0] m0Reg, m1Reg;
-	reg stbM0Reg, stbM1Reg;
+	reg stbM0Reg, stbM1Reg;//Master has a waiting request
 	
 	always @ (posedge clk)
 	begin
 		if(!nakM0) m0Reg <= {addrM0, doutM0, weM0, dmM0};
 		if(!nakM1) m1Reg <= {addrM1, doutM1, weM1, dmM1};
-		if(!stbS) master <= !master;
+		if(~stbS & ~nakS) master <= !master;//master:nakS0 -> nakS1 -> nakS0
 	end
 	
 	assign stbS = master? (stbM1 || stbM1Reg): (stbM0 || stbM0Reg);
@@ -40,16 +41,16 @@ module DBusArbiter (
 	
 	always @ (posedge clk)
 	begin
-		if(!nakS) nakMaster <= master;
+		if(!nakS) nakMaster <= master;//nakMaster:nakS1->nakS0
 		
-		if(stbM0 && master != 0)
-			stbM0Reg <= 1;
-		else if(!nakS && master == 0)
-			stbM0Reg <= 0;
+		if(stbM0 && master != 0)//have to wait
+			stbM0Reg <= 1;//no mantter how nakS is
+		else if(!nakS && master == 0)//start to handle
+			stbM0Reg <= 0;//give handle to nakS
 		
-		if(stbM1 && master != 1)
+		if(stbM1 && master != 1)//have to wait
 			stbM1Reg <= 1;
-		else if(!nakS && master == 1)
+		else if(!nakS && master == 1)//sart to handle
 			stbM1Reg <= 0;
 	end
 	
@@ -107,13 +108,14 @@ module DBusArbiter_sim();
 		stbM0 = 1;
 		#10;
 		stbM0 = 0;
-		stbM1 = 1;
 		nakS = 1;
+		#10
+		stbM1 = 1;
 		#10;
 		stbM1 = 0;
 		#40;
 		nakS = 0; doutS = 32'hffffeeee;
-		#10;
+		#20;
 		nakS = 1;
 		#40;
 		nakS = 0; doutS = 32'hddddcccc;

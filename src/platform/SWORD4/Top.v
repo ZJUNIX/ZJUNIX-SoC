@@ -58,7 +58,9 @@ module Top(
 	//IBus signals
 	wire [31:0] addrIBus, dinIBus;
 	//DBus signals
-	wire [31:0] addrDBus, doutDBus, dinDBus;
+	//(* MARK_DEBUG = "true" *)
+	wire [31:0] addrDBus;
+	wire [31:0] doutDBus, dinDBus;
 	wire stbDBus, weDBus, nakDBus;
 	wire [3:0] dmDBus;
 	//Wishbone DDR3 signals
@@ -68,9 +70,9 @@ module Top(
 	wire [63:0] dmDDR;
 	//Peripheral signals
 	wire [31:0] progMemData, cVramData, gVramData, ioData, sdCtrlData, sdDataData, sramData;
-	wire progMemEN, cVramEN, gVramEN, ioEN, sdCtrlEN, sdDataEN, sramEN, sramNak;
-	//sram
-	wire [47:0] sram_din, sram_dout;
+	wire progMemEN, cVramEN, gVramEN, ioEN, sdCtrlEN, sdDataEN;
+	//(* MARK_DEBUG = "true" *)
+	wire sramEN, sramNak;
 	
 	wire [4:0] cpuInterrupt;
 	
@@ -81,6 +83,15 @@ module Top(
 	//VGA control registers
 	wire [31:0] vgaCtrlReg0, vgaCtrlReg1;
 	
+	wire [31:0]ddbusData;
+	//(* MARK_DEBUG = "true" *)
+	wire [31:0]sramAddr, sramInData;
+	//(* MARK_DEBUG = "true" *)
+	wire ddbusNak, ddbusEN;
+	//(* MARK_DEBUG = "true" *)
+    wire [3:0] sram_we;
+    
+
 	CPUCacheTop core(
 		.clkCPU(clkCPU), .clkDDR(clkDDR), .rst(globlRst), .interrupt(cpuInterrupt),
 		.addrIBus(addrIBus), .dinIBus(dinIBus), .stbIBus(), .nakIBus(1'b0),
@@ -108,13 +119,18 @@ module Top(
 		.dbg_flags({dmDBus, stbDBus, stbDDR, cycDDR, weDDR, ackDDR, dbg_ddrState, cpuInterrupt[3:0]})
 	);
 	assign LED = {stbDBus, stbDDR, cycDDR, weDDR, ackDDR, dbg_ddrState};
+	//(* MARK_DEBUG = "true" *)
+	wire vga_stb, vga_nak;
+	wire [31:0]vga_addr, vga_dout, vga_din;
+	wire [3:0]vga_we;
 	
-	VGADevice #(.GRAPHIC_VRAM(0)) vga(.clkVGA(clkVGA), .clkMem(clkCPU),
-		.ctrl0(vgaCtrlReg0), .ctrl1(vgaCtrlReg1),
-		.dataInBus(doutDBus), .addrBus(addrDBus), .weBus(dmDBus),
-		.en_Graphic(gVramEN), .en_Char(cVramEN), .dataOut_Char(cVramData),
-		.videoOut(VGAColor), .HSync(HSync), .VSync(VSync));
-	assign gVramData = 32'h0;
+	VGADevice #(.GRAPHIC_VRAM(1)) vga(.rst(globlRst), .clkVGA(clkVGA), .clkMem(clkCPU),
+        .ctrl0(vgaCtrlReg0), .ctrl1(vgaCtrlReg1),
+        .dataInBus(doutDBus), .addrBus(addrDBus), .weBus(dmDBus),
+        .en_Char(cVramEN), .dataOut_Char(cVramData),
+        .videoOut(VGAColor), .HSync(HSync), .VSync(VSync),
+        .wb_stb(vga_stb), .wb_addr(vga_addr),.wb_we(vga_we),.wb_din(vga_din),.wb_dout(vga_dout), .wb_nak(vga_nak));
+    assign gVramData = 32'h0;
 	
 	SDWrapper sdc(.clkCPU(clkCPU), .clkSD(clk_100M), .globlRst(globlRst),
 		.dataInBus(doutDBus), .addrBus(addrDBus), .weBus(dmDBus),
@@ -130,7 +146,7 @@ module Top(
 		.ioEN(ioEN), .ioData(ioData), .ioNak(1'b0),
 		.sdCtrlEN(sdCtrlEN), .sdCtrlData(sdCtrlData), .sdCtrlNak(1'b0),
 		.sdDataEN(sdDataEN), .sdDataData(sdDataData), .sdDataNak(1'b0),
-		.sramEN(sramEN), .sramData(sramData), .sramNak(sramNak));
+		.sramEN(ddbusEN), .sramData(ddbusData), .sramNak(ddbusNak));
 	
 	BiosMem mem0(.clka(clkCPU), .addra(addrDBus[13:2]), .dina(doutDBus),
 		.wea(dmDBus), .ena(progMemEN), .douta(progMemData),
@@ -163,7 +179,21 @@ module Top(
 		.ddr3_dm(ddr3_dm),
 		.ddr3_odt(ddr3_odt)
 	);
-	
+
+	DBusArbiter dbusarb(
+	   .clk(clkCPU),
+	   .rst(globlRst),
+	   //Master 0
+	   .addrM0(addrDBus),.doutM0(doutDBus),.stbM0(ddbusEN),.weM0(),
+	   .dmM0(dmDBus),.dinM0(ddbusData),.nakM0(ddbusNak),
+	   //Master 1
+	   .addrM1(vga_addr),.doutM1(vga_din),.stbM1(vga_stb),.weM1(),
+       .dmM1(vga_we),.dinM1(vga_dout),.nakM1(vga_nak),
+       //slave
+       .addrS(sramAddr),.dinS(sramInData),.stbS(sramEN),
+       .weS(),.dmS(sram_we),.doutS(sramData),
+       .nakS(sramNak)
+	);
 	
 	SRAM sram(
 	   .clk(clkCPU),
@@ -178,9 +208,9 @@ module Top(
        
         // wishbone slave interfaces
         .wb_stb(sramEN),
-        .wb_addr(addrDBus),
-        .wb_we(dmDBus),
-        .wb_din(doutDBus),
+        .wb_addr(sramAddr),
+        .wb_we(sram_we),
+        .wb_din(sramInData),
         .wb_dout(sramData),
         .wb_nak(sramNak)
         );

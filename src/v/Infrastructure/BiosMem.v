@@ -43,7 +43,7 @@ module BiosMem(
 	end
 	
 	initial
-		$readmemh("../../coe/bootstrap.hex", data);
+		$readmemh("../../coe/text.coe", data);
 
 	UART_RX #(.COUNTER_MSB(9)) U0(.clk(clkProg), .halfPeriod(9'd433), .RX(uartRx),
 		.m_data(uartData), .m_valid(uartValid));
