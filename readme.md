@@ -13,6 +13,7 @@ Detailed documentation is currently in progress; a general description is provid
 Follow these steps to create the SoC project from this repository:
 
 1. Launch Vivado and open the TCL console.
+   Note: This project is based on Vivado version 2016.2. Different versions of Vivado will produce different synthesis results, and it is possible for the design to fail to meet timing requirements.
 
 2. Navigate to the ```project``` directory with the ```cd``` command.
    Note: The path to this directory should not contain spaces or non-ascii characters

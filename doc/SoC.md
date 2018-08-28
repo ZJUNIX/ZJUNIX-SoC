@@ -122,7 +122,7 @@ The virtual address space is compliant with MIPS32 specifications:
 | 0xA0000000 - 0xBFFFFFFF | Kernel Unmapped Uncached |
 | 0xC0000000 - 0xFFFFFFFF | Kernel Mapped            |
 
-Physical address space is slightly different from industrial conventions: the *Kernel Unmapped Uncached* segment maps to a dedicated I/O address space, and this physical address space cannot be access via cached virtual address segments even they map to the same physical address. In other words, any cached memory reference goes to the DRAM main memory, while any uncached memory reference goes to this I/O address space.
+Physical address space is slightly different from industrial conventions: the *Kernel Unmapped Uncached* segment maps to a dedicated I/O address space, and this physical address space cannot be access via cached virtual address segments even if they map to the same physical address. In other words, any cached memory reference goes to the DRAM main memory, while any uncached memory reference goes to this I/O address space.
 
 Unmapped uncached memory references correspond to transactions on instruction bus and data bus mentioned above.
 
@@ -130,7 +130,7 @@ Unmapped uncached memory references correspond to transactions on instruction bu
 
 Basic I/Os include 16 slide switched, a 5x5 pushbutton array, 8-digit 7-segment display, 16 LEDs, PS/2 controller and UART controller. The PS/2 and UART controllers have hardware buffers that map to a single word in the address space; memory references to those addresses will automatically fill transmit buffer or empty receive buffer.
 
-The system uses SD card as external storage. Software interface of the SD card controller is compatible with the controller at https://github.com/mczerski/SD-card-controller, except for the clock divider register(it divides input clock by $(X+1)$ instead of $2(X+1)$). See its document for details on the control register set.
+The system uses SD card as external storage. It supports standard 4-bit SD bus mode operation along with 1-bit SD bus mode, but SPI mode is not supported since it is too slow compared to SD bus mode.
 
 The system has a VGA controller for output, which provides 4-bit color depth per channel and 640x480 resolution. It has character mode only.
 
@@ -151,11 +151,11 @@ Address allocation(shown in virtual address space):
 | 0xBFC0901C              | PS/2 control register         |
 | 0xBFC09100 - 0xBFC091FF | SD card controller registers  |
 
+Please refer to [peripheral documentation](./Peripherals.md) for detailed information on these peripherals.
+
 ### 8. Bootstrapping
 
-The bootloader is written in the ROM mentioned above. Note that this ROM is actually a RAM; writing to this address are accepted, and if the writing is careless, it can corrupt the bootloader; in this case, the FPGA should be programmed again.
-
-The ROM can be reprogrammed when holding down system reset and sending new data via UART. The UART is configured at 115200, 8N1 in this case. Data in a word should be sent least-significant byte first. **Reprogram the ROM only if you know what your are doing**.
+The bootloader is written in the ROM mentioned above. The ROM can be reprogrammed when holding down system reset and sending new data via UART. The UART is configured at 115200, 8N1 in this case. Data in a word should be sent least-significant byte first. Please note that this operation will completely erase the ROM and program it with new content, probably resulting in inability to boot the operating system, so reprogram the ROM only if necessary.
 
 After system reset, the processor starts to execute instructions in the bootloader. The bootloader performs 2 major functions:
 
